@@ -83,7 +83,7 @@ The queries and the result sets are here to show you the power of SQL when worki
 
 The SQL queries are executed with the help of `GDAL` Python bindings using the [`ExecuteSQL()`](http://gdal.org/python/osgeo.ogr.DataSource-class.html#ExecuteSQL) method (mind that `SQLITE` dialect is being used). The result set returned is post-processed to include the abridged `WKT` representation of the geometries. The result sets have been converted subsequently into a `markdown` table for displaying in this guide.
 
-More examples can be found in the samples document [TODO](http://)
+More examples can be found in the [samples document](https://github.com/AlexArcPy/GDBee/blob/master/docs/sample_queries.md)
 
 ### Non-spatial queries
 
@@ -194,7 +194,7 @@ LIMIT 10
 ### New functionality under consideration
 
 * Tree-view into all tables and columns in the database (SSMS like)
-* FileGDB API to add editing mode of geodatabase ([supported by ogr](http://www.gdal.org/ogr_sql_sqlite.html)
+* FileGDB API to add editing mode of geodatabase ([supported by ogr](http://www.gdal.org/ogr_sql_sqlite.html))
 
 ### Issues
 
