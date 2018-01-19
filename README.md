@@ -18,6 +18,8 @@ This project has started as an experimental playground to see what functionality
 * Copying data from the result set table (either individual cell values or row(s) with the headers preserved) - ready to paste properly into an Excel sheet
 * Choosing whether you want to have geometry column in the result set as WKT
 
+![Application window](https://user-images.githubusercontent.com/7373268/35136490-38c68d76-fce4-11e7-8f16-780b18b055e5.png)
+
 ## Limitations
 
 * All queries should target datasets stored within a single geodatabase; you won't be able to run this query:
@@ -83,7 +85,7 @@ The queries and the result sets are here to show you the power of SQL when worki
 
 The SQL queries are executed with the help of `GDAL` Python bindings using the [`ExecuteSQL()`](http://gdal.org/python/osgeo.ogr.DataSource-class.html#ExecuteSQL) method (mind that `SQLITE` dialect is being used). The result set returned is post-processed to include the abridged `WKT` representation of the geometries. The result sets have been converted subsequently into a `markdown` table for displaying in this guide.
 
-More examples can be found in the [samples document](https://github.com/AlexArcPy/GDBee/blob/master/docs/sample_queries.md)
+More examples can be found in the [samples document](https://github.com/AlexArcPy/GDBee/blob/master/docs/sample_queries.md).
 
 ### Non-spatial queries
 
