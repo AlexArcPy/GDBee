@@ -4,6 +4,10 @@
 
 If you are a QGIS Desktop user, you are already able to execute SQL against file geodatabases using [QGIS DBManager plugin](https://docs.qgis.org/2.14/en/docs/user_manual/plugins/plugins_db_manager.html), but `GDBee` has some extra features that the DBManager is missing (for instance, you do not need to add your datasets as layers first and you can choose to copy individual cells instead of the whole row) from the result table.
 
+<p align="center">
+  <img src="https://user-images.githubusercontent.com/7373268/35136490-38c68d76-fce4-11e7-8f16-780b18b055e5.png" alt="GDBee window"/>
+</p>
+
 ## History
 
 This project has started as an experimental playground to see what functionality PyQt provides. As I spent more time working with PyQt, I have started wondering what it would take to build a simple desktop application. Because I often find myself in need of querying a file geodatabase's datasets, I have decided to build a GUI-based SQL editor that would let me execute SQL queries against a table or a feature class and draw the result set in a table form for further visual inspection. I have thought that other GIS users and developers may find this application useful and I therefore have decided to start a GitHub repository to let others take advantage of my work.
@@ -17,8 +21,6 @@ This project has started as an experimental playground to see what functionality
 * Convenient keyboard shortcuts for query execution (`F5` and `Ctrl-Enter`) and tab interaction (`Ctrl-N` and `Ctrl-W` for opening and closing tabs)
 * Copying data from the result set table (either individual cell values or row(s) with the headers preserved) - ready to paste properly into an Excel sheet
 * Choosing whether you want to have geometry column in the result set as WKT
-
-![Application window](https://user-images.githubusercontent.com/7373268/35136490-38c68d76-fce4-11e7-8f16-780b18b055e5.png)
 
 ## Limitations
 
