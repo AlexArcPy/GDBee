@@ -73,11 +73,11 @@ You may find this PyQt desktop application useful if:
 
 If you are an ArcGIS user, you have already used SQL for querying your file geodatabase datasets when using the `Select By Attributes` and `Select By Location` dialog windows or `Select Layer By Attributes`, `Select Layer By Location`, `Make Feature Layer` or `Select` geoprocessing tools. You have supplied a `where` clause specifying what features or rows you would like to select. This can be done simply to see what data match your query or to perform some analysis on the subset of your data. The querying functionality available through these tools is somewhat limited, though, because you will not be able to take advantage of rich SQL operations such as grouping your data, joining multiple tables, or using spatial SQL functions.
 
-Open source GIS users have better tools for quering file geodatabases using SQL; [QGIS DBManager plugin](https://docs.qgis.org/2.8/en/docs/training_manual/databases/db_manager.html) does provide an excellent interface for executing SQL queries against map layers added from a file geodatabase. However, this requires installing QGIS Desktop software and adding all the datasets you would like to participate in the SQL query into a map. Also, there are no tools to quickly export the result set in a suitable format.
+Open source GIS users have better tools for querying file geodatabases using SQL; [QGIS DBManager plugin](https://docs.qgis.org/2.8/en/docs/training_manual/databases/db_manager.html) does provide an excellent interface for executing SQL queries against map layers added from a file geodatabase. However, this requires installing QGIS Desktop software and adding all the datasets you would like to participate in the SQL query into a map. Also, there are no tools to quickly export the result set in a suitable format.
 
 Esri does provide [File Geodatabase C++ API for Windows, MacOS and Linux](https://github.com/Esri/file-geodatabase-api), however it also has a number of limitations; for instance, SQL joins are not supported and you would need to have Microsoft Visual Studio for development (gcc/clang on Linux). You would also need to bind the API to your own language of choice since only .NET bindings are included.
 
-Because Python is widely used in the GIS community, I thought it would make sense to take advantage of Python bindings of `GDAL` (via [`GEOS`](https://trac.osgeo.org/geos)) to be able to connect to a file geodatabase and execute SQL queries. Working with a file geodatabase via `GEOS` makes it possible to take advantage of SQL spatial functions that are otherwise unaccessible to an ArcGIS user.
+Because Python is widely used in the GIS community, I thought it would make sense to take advantage of Python bindings of `GDAL` (via [`GEOS`](https://trac.osgeo.org/geos)) to be able to connect to a file geodatabase and execute SQL queries. Working with a file geodatabase via `GEOS` makes it possible to take advantage of SQL spatial functions that are otherwise inaccessible to an ArcGIS user.
 
 ## Examples of executing SQL queries against file geodatabase using `GDAL`
 
@@ -161,7 +161,7 @@ WHERE
 |  6 | 2007/07/06 00:00:00 | Manhattan  |            1 | DISPUTE          | 2834.0000 | knife    | D            | 2007.0000 | POINT (585305.7312 4508053.368)  |
 |  7 | 2011/04/10 00:00:00 | Manhattan  |            1 |                  | 4171.0000 | gun      |              | 2011.0000 | POINT (585724.1624 4508111.4603) |
 
-#### Find neighborhoods with the largest number of crimes commited (count number of homicides in each neighborhood) (`ST_Contains`)
+#### Find neighborhoods with the largest number of crimes committed (count number of homicides in each neighborhood) (`ST_Contains`)
 
 ```sql
 SELECT
