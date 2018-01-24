@@ -13,7 +13,7 @@ from cfg import dev_mode, not_connected_to_gdb_message
 
 from PyQt5.QtWidgets import (QWidget, QHBoxLayout, QTableWidget, QAction, QPlainTextEdit,
                              QSplitter, QApplication, QStyleFactory, QTableWidgetItem,
-                             QLabel, QPushButton, QToolBar, QFileDialog)
+                             QLabel, QPushButton, QToolBar, QFileDialog, QMessageBox)
 from PyQt5.QtCore import Qt, QMargins, QEvent
 from PyQt5.QtGui import QKeySequence, QFont
 
@@ -44,6 +44,7 @@ class Tab(QWidget):
         self.connected_gdb_path_label.setText(not_connected_to_gdb_message)
 
         self.browse_to_gdb = QPushButton('Browse')
+        self.browse_to_gdb.setShortcut(QKeySequence('Ctrl+B'))
         self.browse_to_gdb.clicked.connect(self.connect_to_geodatabase)
 
         self.gdb_browse_toolbar = QToolBar()
@@ -133,8 +134,15 @@ class Tab(QWidget):
         # TODO: add a filter to show only .gdb folders?
         # https://stackoverflow.com/questions/4893122/filtering-in-qfiledialog
         if gdb_path and gdb_path.endswith('.gdb'):
-            self.gdb = gdb_path
-            self.connected_gdb_path_label.setText(self.gdb)
+            if self._gdb_is_valid(gdb_path):
+                self.gdb = gdb_path
+                self.connected_gdb_path_label.setText(self.gdb)
+            else:
+                msg = QMessageBox()
+                msg.setText("This is not a valid file geodatabase")
+                msg.setWindowTitle("Validation error")
+                msg.setStandardButtons(QMessageBox.Ok)
+                msg.exec_()
         return
 
     #----------------------------------------------------------------------
@@ -158,6 +166,8 @@ class Tab(QWidget):
             return
         try:
             ds = ogr.Open(self.gdb, 0)  # read-only mode
+            if not ds:
+                return
 
             # use the text of what user selected, if none -> need to run the whole query
             part_sql_query = self.query.textCursor().selection().toPlainText()
@@ -215,7 +225,7 @@ class Tab(QWidget):
         # TODO: how to make shape field appear in the right order?
         # currently always in the end
         geom_col_name = res.GetGeometryColumn()  # shape col was in the sql query
-
+        self.geometry_isin_query = bool(geom_col_name)
         columns_names = [field.name for field in res.schema]
         self.table.columns_names = columns_names
         if geom_col_name and self.result_should_include_geometry():
@@ -262,6 +272,19 @@ class Tab(QWidget):
         self.errors_panel.show()
         self.errors_panel.setPlainText(err)
         return
+
+    #----------------------------------------------------------------------
+    def _gdb_is_valid(self, gdb_path):
+        """check if .gdb folder provided by user is a valid file gdb"""
+        try:
+            ds = ogr.Open(gdb_path, 0)
+        except:
+            return False
+
+        if ds:
+            ds.Destroy()
+            return True
+        return False
 
     #----------------------------------------------------------------------
     def _strip_block_comments(self, sql_query):

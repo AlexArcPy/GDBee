@@ -15,7 +15,6 @@ except:
 else:
     tabulate_found = True
 
-
 from PyQt5.QtWidgets import (QMainWindow, QAction, QFileDialog, QMessageBox, QTextEdit,
                              QApplication)
 from PyQt5.Qt import Qt
@@ -122,7 +121,8 @@ class Window(QMainWindow):
 
         current_tab = self.tab_widget.widget(self.tab_widget.currentIndex())
         try:
-            current_tab.table.rowCount()
+            if not current_tab.table.rowCount():
+                raise
         except:
             return
 
@@ -133,15 +133,23 @@ class Window(QMainWindow):
             self.export_result_window = ExportResultWindow()
 
         if option == '&QGIS':
-            s = '\n'.join(df[df.columns[-1]].tolist())
-            self.export_result_window.result.setText(s)
+            if self.window().tab_widget.currentWidget(
+            ).geometry_isin_query and self.window().do_include_geometry.isChecked():
+                s = '\n'.join(df[df.columns[-1]].tolist())
+                self.export_result_window.result.setText(s)
+            else:
+                self.export_result_window.result.setText('')
 
         if option == '&ArcMap':
-            # TODO: get the fields data along with the geometries
-            s = 'geoms = []\n' + 'for wkt_str in {}:\n'.format(
-                df[df.columns[-1]].tolist()) + '\tg = arcpy.FromWKT(wkt_str)\n' + '\tgeoms.append(g)\n' +\
-                "arcpy.CopyFeatures_management(geoms, 'in_memory\GDBeeLayer')"
-            self.export_result_window.result.setText(s)
+            if self.window().tab_widget.currentWidget(
+            ).geometry_isin_query and self.window().do_include_geometry.isChecked():
+                # TODO: get the fields data along with the geometries
+                s = 'geoms = []\n' + 'for wkt_str in {}:\n'.format(
+                    df[df.columns[-1]].tolist()) + '\tg = arcpy.FromWKT(wkt_str)\n' + '\tgeoms.append(g)\n' +\
+                    "arcpy.CopyFeatures_management(geoms, 'in_memory\GDBeeLayer')"
+                self.export_result_window.result.setText(s)
+            else:
+                self.export_result_window.result.setText('')
 
         if option == '&DataFrame':
             out_csv = os.path.join(tempfile.gettempdir(), 'data.csv')
