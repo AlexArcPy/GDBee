@@ -33,6 +33,7 @@ class TestMainWindow(unittest.TestCase):
         self.file_menu = self.menu.actions()[0]
         self.result_menu = self.menu.actions()[1]
         self.settings_menu = self.menu.actions()[2]
+        self.tab = None
         return
 
     #----------------------------------------------------------------------
@@ -77,7 +78,7 @@ class TestMainWindow(unittest.TestCase):
     def test_execute_sql(self):
         """execute SQL query to a connected geodatabase"""
         self.assertEqual(self._get_tabs_count(), 0)
-        self._add_new_query_tab()
+        self.tab = self._add_new_query_tab()
         self.assertEqual(self._get_tabs_count(), 1)
         self._execute_sql('SELECT Name, Type, Oneway FROM streets LIMIT 3')
         self.assertEqual(self.tab.table.rowCount(), 3)
@@ -152,14 +153,61 @@ class TestMainWindow(unittest.TestCase):
         return
 
     #----------------------------------------------------------------------
+    def test_export_before_execute_sql(self):
+        """export result table before any SQL query is executed"""
+        self.assertEqual(self._get_tabs_count(), 0)
+        self.tab = self._add_new_query_tab()
+        self.ui.export_result(None, '&DataFrame')
+        return
+
+    #----------------------------------------------------------------------
+    def test_export_md_with_no_tabulate_installed(self):
+        """export to markdown table with no tabulate package installed"""
+        # TODO
+        pass
+
+    #----------------------------------------------------------------------
+    def test_export_markdown_large_table(self):
+        """export table with more than 1K rows; goes into .md file"""
+        self.tab = self._add_new_query_tab()
+        self._execute_sql('SELECT Name, Type, Oneway, Shape FROM streets LIMIT 1001')
+        self.ui.export_result(None, '&Markdown')
+        self.assertIn('.md', self.ui.export_result_window.result.toPlainText())
+        self.ui.export_result_window.close()
+        return
+
+    #----------------------------------------------------------------------
+    def test_add_new_tab_after_gdb_is_set(self):
+        """add a tab, set its gdb, and then add another tab"""
+        self.tab = self._add_new_query_tab()
+        self.tab.gdb = self.local_gdb
+        self.tab2 = self._add_new_query_tab()
+        self.assertEqual(self.tab2.gdb, self.tab.gdb)
+        return
+
+    #----------------------------------------------------------------------
     def test_trigger_sql_error(self):
         """execute an invalid SQL query"""
-        self._add_new_query_tab()
-        self._execute_sql('SELECT invalid_column from streets limit 3')
+        self.tab = self._add_new_query_tab()
+        self._execute_sql('SELECT invalid_column FROM streets LIMIT 3')
         self.assertTrue(self.tab.errors_panel.isVisible())
         self.assertIn('no such column', self.tab.errors_panel.toPlainText())
-        self._execute_sql('SELECT * from streets limit 3')
+        self._execute_sql('SELECT * FROM streets LIMIT 3')
         self.assertFalse(self.tab.errors_panel.isVisible())
+        return
+
+    #----------------------------------------------------------------------
+    def test_connecting_to_invalid_gdb(self):
+        """browse to a folder with .gdb extension that is not a valid file gdb"""
+        self.tab = self._add_new_query_tab()
+        self._execute_sql('SELECT Name FROM streets LIMIT 1',
+                          r'C:\Non\Existing\Path\Database.gdb')
+
+        # make sure the application still works
+        self.tab = self._add_new_query_tab()
+        self._execute_sql('SELECT Name, Type, Oneway FROM streets LIMIT 3')
+        self.assertEqual(self.tab.table.rowCount(), 3)
+        self.assertEqual(self.tab.table.columnCount(), 3)
         return
 
     #----------------------------------------------------------------------
@@ -183,17 +231,18 @@ class TestMainWindow(unittest.TestCase):
     def test_execute_sql_query_selection(self):
         """test executing only selected part of the SQL query"""
         self.tab = self._add_new_query_tab()
-        sql_query_string = 'select name from streets limit 3\n update'
+        sql_query_string = 'SELECT name FROM streets LIMIT 3\n UPDATE'
         self._prepare_query_text(sql_query_string)
         self.tab.execute_sql()
         self.assertTrue(self.tab.errors_panel.isVisible())
-        self.assertIn('update', self.tab.errors_panel.toPlainText())
+        self.assertIn('UPDATE', self.tab.errors_panel.toPlainText())
 
         cur = self.tab.query.textCursor()
         cur.setPosition(0)
         cur.setPosition(32, QTextCursor.KeepAnchor)
         self.tab.query.setTextCursor(cur)
-        self.assertEqual(self.tab.query.textCursor().selectedText(), sql_query_string[:32])
+        self.assertEqual(self.tab.query.textCursor().selectedText(),
+                         sql_query_string[:32])
 
         self.tab.execute_sql()
         self.assertFalse(self.tab.errors_panel.isVisible())
@@ -206,7 +255,7 @@ class TestMainWindow(unittest.TestCase):
     def test_sql_code_styling(self):
         """test highlighting in SQL query"""
         self.tab = self._add_new_query_tab()
-        sql_query_string = 'select name from streets limit 3'
+        sql_query_string = 'SELECT name FROM streets LIMIT 3'
         self._prepare_query_text(sql_query_string)
 
         cur = self.tab.query.textCursor()
@@ -223,7 +272,7 @@ class TestMainWindow(unittest.TestCase):
     def test_copy_cell_value(self):
         """test select and copy a cell value into a clipboard"""
         self.tab = self._add_new_query_tab()
-        sql_query_string = 'select name from streets limit 3'
+        sql_query_string = 'SELECT name FROM streets LIMIT 3'
         self._prepare_query_text(sql_query_string)
         self._execute_sql(sql_query_string)
 
@@ -247,10 +296,13 @@ class TestMainWindow(unittest.TestCase):
         return
 
     #----------------------------------------------------------------------
-    def _execute_sql(self, sql):
+    def _execute_sql(self, sql, user_gdb=None):
         """execute SQL query in the current tab"""
         self.tab = self.ui.tab_widget.currentWidget()
-        self.tab.gdb = self.local_gdb
+        if user_gdb:
+            self.tab.gdb = user_gdb
+        else:
+            self.tab.gdb = self.local_gdb
         self.tab.query.setPlainText(sql)
         self.tab.execute_sql()
         return

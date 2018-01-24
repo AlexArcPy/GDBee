@@ -103,3 +103,4 @@ ENV/
 # Geodatabase
 NYC.gdb/
 GDBeeProject.wpr
+coverage_html/
