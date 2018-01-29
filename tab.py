@@ -214,8 +214,9 @@ class Tab(QWidget):
                 self.nbrow = len(res)
                 # TODO: add pagination for quicker drawing
                 self.draw_result_table(res)
-                message = "Executed in {:.1f} secs | {} rows".format(end_time-start_time, len(res))
-                self.update_app_status_bar(message)
+                msg = "Executed in {:.1f} secs | {} rows".format(
+                    end_time - start_time, len(res))
+                self.update_app_status_bar(msg)
 
         except Exception as err:
             print(err)
@@ -238,11 +239,11 @@ class Tab(QWidget):
     def update_app_status_bar(self, message):
         """updating app status bar with the execution result details"""
         try:
-            self.parentWidget().parentWidget().parentWidget().statusBar().showMessage(message)
+            self.parentWidget().parentWidget().parentWidget().statusBar().showMessage(
+                message)
         except:
             pass
         return
-
 
     #----------------------------------------------------------------------
     def draw_result_table(self, res):
