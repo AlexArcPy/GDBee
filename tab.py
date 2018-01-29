@@ -3,6 +3,7 @@
 
 import re
 import ogr
+import time
 import pandas as pd
 
 from highlighter import Highlighter
@@ -118,11 +119,6 @@ class Tab(QWidget):
         QApplication.setStyle(QStyleFactory.create('Cleanlooks'))
         self.show()
 
-        if dev_mode:
-            self.gdb = r'NYC.gdb'
-            self.connected_gdb_path_label.setText(self.gdb)
-            self.query.setText('select * from streets limit 5')
-            self.execute_sql()
         return
 
     #----------------------------------------------------------------------
@@ -203,7 +199,9 @@ class Tab(QWidget):
                 res = None
                 if self.dialect == 'SQLITE':
                     do_commit_transaction = False
+                start_time = time.time()
                 res = ds.ExecuteSQL(sql_query, dialect=self.dialect)
+                end_time = time.time()
                 if do_commit_transaction:
                     res.CommitTransaction()
             except Exception as err:
@@ -212,8 +210,12 @@ class Tab(QWidget):
             if res:
                 self.table.show()
                 self.errors_panel.hide()
-                self.nbrow = res.GetFeatureCount()
+                # TODO: any faster way to count features?
+                self.nbrow = len(res)
+                # TODO: add pagination for quicker drawing
                 self.draw_result_table(res)
+                message = "Executed in {:.1f} secs | {} rows".format(end_time-start_time, len(res))
+                self.update_app_status_bar(message)
 
         except Exception as err:
             print(err)
@@ -231,6 +233,16 @@ class Tab(QWidget):
             ).do_include_geometry.isChecked()
         except:
             return True
+
+    #----------------------------------------------------------------------
+    def update_app_status_bar(self, message):
+        """updating app status bar with the execution result details"""
+        try:
+            self.parentWidget().parentWidget().parentWidget().statusBar().showMessage(message)
+        except:
+            pass
+        return
+
 
     #----------------------------------------------------------------------
     def draw_result_table(self, res):

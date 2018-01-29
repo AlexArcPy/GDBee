@@ -56,6 +56,13 @@ class TabWidget(QTabWidget):
         self.setCurrentWidget(empty_tab)  # focus on the newly added tab
         # focus on the query text panel to be able to start typing directly
         empty_tab.query.setFocus()
+
+        if dev_mode:
+            empty_tab.gdb = r'NYC.gdb'
+            empty_tab.connected_gdb_path_label.setText(empty_tab.gdb)
+            empty_tab.query.setText('select * from streets limit 5')
+            empty_tab.execute_sql()
+
         return
 
     #----------------------------------------------------------------------

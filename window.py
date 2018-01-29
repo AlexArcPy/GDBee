@@ -52,6 +52,7 @@ class Window(QMainWindow):
         super(Window, self).__init__(parent)
         self.setWindowTitle(project_name)
         self.setWindowIcon(QIcon('logo.png'))
+        self.statusBar().showMessage("")
 
         menu = self.menuBar()
         file_menu = menu.addMenu("&File")
