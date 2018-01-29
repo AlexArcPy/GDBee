@@ -163,7 +163,7 @@ class TestMainWindow(unittest.TestCase):
     #----------------------------------------------------------------------
     def test_export_md_with_no_tabulate_installed(self):
         """export to markdown table with no tabulate package installed"""
-        # TODO
+        # TODO: implement test
         pass
 
     #----------------------------------------------------------------------
@@ -265,7 +265,7 @@ class TestMainWindow(unittest.TestCase):
 
         # TODO: bold is never True even though `select` shown as bold
         # perhaps because I use the regex pattern instead of having bold prop
-        #self.query.textCursor().charFormat().font().bold()
+        #self.tab.query.textCursor().charFormat().font().Bold
         return
 
     #----------------------------------------------------------------------
@@ -276,7 +276,7 @@ class TestMainWindow(unittest.TestCase):
         self._prepare_query_text(sql_query_string)
         self._execute_sql(sql_query_string)
 
-        # TODO send the copy to clipboard command
+        # TODO: send the copy to clipboard command
         # QTest.keyPress(self.ui, QKeySequence.Copy)
         return
 
