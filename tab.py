@@ -14,8 +14,8 @@ from cfg import dev_mode, not_connected_to_gdb_message
 from PyQt5.QtWidgets import (QWidget, QHBoxLayout, QTableWidget, QAction, QPlainTextEdit,
                              QSplitter, QApplication, QStyleFactory, QTableWidgetItem,
                              QLabel, QPushButton, QToolBar, QFileDialog, QMessageBox)
-from PyQt5.QtCore import Qt, QMargins, QEvent
-from PyQt5.QtGui import QKeySequence, QFont
+from PyQt5.QtCore import Qt, QMargins, QEvent, QRegExp
+from PyQt5.QtGui import QKeySequence, QFont, QTextCharFormat
 
 
 ########################################################################
@@ -45,7 +45,8 @@ class Tab(QWidget):
 
         self.browse_to_gdb = QPushButton('Browse')
         self.browse_to_gdb.setShortcut(QKeySequence('Ctrl+B'))
-        self.browse_to_gdb.clicked.connect(self.connect_to_geodatabase)
+        self.browse_to_gdb.clicked.connect(lambda evt, arg=True: self.connect_to_geodatabase(
+            evt, triggered_with_browse=True))
 
         self.gdb_browse_toolbar = QToolBar()
         self.gdb_browse_toolbar.setMaximumHeight(50)
@@ -78,8 +79,8 @@ class Tab(QWidget):
         self.highlighter = Highlighter(self.query.document())
 
         # TODO select block of text - Ctrl+/ and they become comments
-        self.completer = Completer().completer
-        self.query.set_completer(self.completer)
+        self.completer = Completer()
+        self.query.set_completer(self.completer.completer)
 
         # errors panel to show if query fails to execute properly
         self.errors_panel = QPlainTextEdit()
@@ -125,24 +126,40 @@ class Tab(QWidget):
         return
 
     #----------------------------------------------------------------------
-    def connect_to_geodatabase(self):
+    def connect_to_geodatabase(self, evt, triggered_with_browse=True):
         """connect to geodatabase by letting user browse to a gdb folder"""
-        gdb_connect_dialog = QFileDialog(self)
-        gdb_connect_dialog.setFileMode(QFileDialog.Directory)
-        gdb_path = gdb_connect_dialog.getExistingDirectory()
+        if triggered_with_browse:
+            gdb_connect_dialog = QFileDialog(self)
+            gdb_connect_dialog.setFileMode(QFileDialog.Directory)
+            gdb_path = gdb_connect_dialog.getExistingDirectory()
 
-        # TODO: add a filter to show only .gdb folders?
-        # https://stackoverflow.com/questions/4893122/filtering-in-qfiledialog
-        if gdb_path and gdb_path.endswith('.gdb'):
-            if self._gdb_is_valid(gdb_path):
-                self.gdb = gdb_path
-                self.connected_gdb_path_label.setText(self.gdb)
-            else:
-                msg = QMessageBox()
-                msg.setText("This is not a valid file geodatabase")
-                msg.setWindowTitle("Validation error")
-                msg.setStandardButtons(QMessageBox.Ok)
-                msg.exec_()
+            # TODO: add a filter to show only .gdb folders?
+            # https://stackoverflow.com/questions/4893122/filtering-in-qfiledialog
+            if gdb_path and gdb_path.endswith('.gdb'):
+                if self._gdb_is_valid(gdb_path):
+                    self.gdb = gdb_path
+                    self.connected_gdb_path_label.setText(self.gdb)
+                    self._set_gdb_items_highlight()
+                else:
+                    msg = QMessageBox()
+                    msg.setText("This is not a valid file geodatabase")
+                    msg.setWindowTitle("Validation error")
+                    msg.setStandardButtons(QMessageBox.Ok)
+                    msg.exec_()
+        else:
+            if self._gdb_is_valid(self.gdb):
+                self._set_gdb_items_highlight()
+        return
+
+    #----------------------------------------------------------------------
+    def _set_gdb_items_highlight(self):
+        """set completer and highlight properties for gdb items"""
+        self.gdb_items = self._get_gdb_items()
+        self.highlighter.set_highlight_rules_gdb_items(self.gdb_items, 'Table')
+
+        self.gdb_columns = self._get_gdb_columns()
+        self.completer.update_completer_string_list(self.gdb_items + self.gdb_columns)
+        self.highlighter.set_highlight_rules_gdb_items(self.gdb_columns, 'Column')
         return
 
     #----------------------------------------------------------------------
@@ -272,6 +289,25 @@ class Tab(QWidget):
         self.errors_panel.show()
         self.errors_panel.setPlainText(err)
         return
+
+    #----------------------------------------------------------------------
+    def _get_gdb_items(self):
+        """get list of tables and feature classes inside a file gdb"""
+        ds = ogr.Open(self.gdb, 0)
+        return list(
+            set([ds.GetLayerByIndex(i).GetName() for i in range(0, ds.GetLayerCount())]))
+
+    #----------------------------------------------------------------------
+    def _get_gdb_columns(self):
+        """get list of all columns in all tables and feature classes inside a file gdb"""
+        ds = ogr.Open(self.gdb, 0)
+        all_cols_names = []
+        for item in self.gdb_items:
+            lyr = ds.GetLayerByName(item)
+            geom_col = lyr.GetGeometryColumn()
+            all_cols_names.extend([col.GetName() for col in lyr.schema])
+            all_cols_names += [geom_col] if geom_col is not '' else []
+        return list(set(all_cols_names))
 
     #----------------------------------------------------------------------
     def _gdb_is_valid(self, gdb_path):

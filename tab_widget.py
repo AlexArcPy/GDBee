@@ -48,11 +48,11 @@ class TabWidget(QTabWidget):
                 empty_tab.gdb = current_tab_gdb
                 empty_tab.connected_gdb_path_label.setText(
                     self.widget(self.currentIndex()).gdb)
+                empty_tab.connect_to_geodatabase(evt=None, triggered_with_browse=False)
             else:  # the first tab
                 empty_tab.connected_gdb_path_label.setText(
                     not_connected_to_gdb_message)
 
-        # TODO: is it really needed?
         self.setCurrentWidget(empty_tab)  # focus on the newly added tab
         # focus on the query text panel to be able to start typing directly
         empty_tab.query.setFocus()

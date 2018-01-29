@@ -59,6 +59,17 @@ class Highlighter(QSyntaxHighlighter):
         """Constructor"""
         super(Highlighter, self).__init__(parent)
 
+        self.gdb_highlight_settings = {
+            'Table': {
+                'Foreground': Qt.black,
+                'FontWeight': QFont.Bold
+            },
+            'Column': {
+                'Foreground': Qt.darkGray,
+                'FontWeight': QFont.Normal
+            },
+        }
+
         # SQL keywords to show as bold and blue
         keyword_format = QTextCharFormat()
         keyword_format.setForeground(Qt.darkBlue)
@@ -116,6 +127,18 @@ class Highlighter(QSyntaxHighlighter):
 
         self.comment_start_expression = QRegExp("/\\*")
         self.comment_end_expression = QRegExp("\\*/")
+        return
+
+    #----------------------------------------------------------------------
+    def set_highlight_rules_gdb_items(self, items, item_type):
+        """update highlight rules to include gdb datasets"""
+        for item in items:
+            fmt = QTextCharFormat()
+            fmt.setForeground(self.gdb_highlight_settings[item_type]['Foreground'])
+            fmt.setFontWeight(self.gdb_highlight_settings[item_type]['FontWeight'])
+            regexp = QRegExp('\\b{}\\b'.format(item))
+            regexp.setCaseSensitivity(Qt.CaseInsensitive)
+            self.highlight_rules.append((regexp, fmt))
         return
 
     #----------------------------------------------------------------------
