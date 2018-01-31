@@ -10,7 +10,7 @@ from PyQt5.QtWidgets import QApplication
 from PyQt5.QtTest import QTest
 
 from window import Window
-
+from geodatabase import Geodatabase as GDB
 
 ########################################################################
 class TestMainWindow(unittest.TestCase):
@@ -21,7 +21,7 @@ class TestMainWindow(unittest.TestCase):
     def setUpClass(cls):
         """prepare the application configuration and the context"""
         super(TestMainWindow, cls).setUpClass()
-        setattr(cls, 'local_gdb', 'NYC.gdb')
+        setattr(cls, 'local_gdb', GDB('NYC.gdb'))
         return
 
     #----------------------------------------------------------------------
@@ -58,10 +58,10 @@ class TestMainWindow(unittest.TestCase):
     def test_create_multiple_tabs(self):
         """create several tabs"""
         self.assertEqual(self._get_tabs_count(), 0)
-        for i in range(10):
+        for i in range(3):
             self.tab = self._add_new_query_tab()
-        self.assertEqual(self._get_tabs_count(), 10)
-        self.assertEqual(self.ui.tab_widget.tabText(9), 'Query 10')
+        self.assertEqual(self._get_tabs_count(), 3)
+        self.assertEqual(self.ui.tab_widget.tabText(2), 'Query 3')
         return
 
     #----------------------------------------------------------------------
@@ -100,7 +100,7 @@ class TestMainWindow(unittest.TestCase):
         self.tab.query.setPlainText(
             'SELECT Name, Type, Oneway, Shape FROM streets LIMIT 3')
 
-        self.tab.execute_sql()
+        self.tab.run_query()
         self.assertEqual(self.tab.table.rowCount(), 3)
         self.assertEqual(self.tab.table.columnCount(), 4)
 
@@ -108,7 +108,7 @@ class TestMainWindow(unittest.TestCase):
         self.ui.do_include_geometry.setChecked(False)
         self.assertFalse(self.ui.do_include_geometry.isChecked())
 
-        self.tab.execute_sql()
+        self.tab.run_query()
         self.assertEqual(self.tab.table.rowCount(), 3)
         self.assertEqual(self.tab.table.columnCount(), 3)
         return
@@ -120,12 +120,12 @@ class TestMainWindow(unittest.TestCase):
         self.tab = self._add_new_query_tab()
         self.assertEqual(self._get_tabs_count(), 1)
 
-        self.tab.gdb = self.local_gdb
+        self.tab.gdb = (self.local_gdb)
         self.tab = self.ui.tab_widget.currentWidget()
         self.tab.query.setPlainText(
             'SELECT Name, Type, Oneway, Shape FROM streets LIMIT 3')
 
-        self.tab.execute_sql()
+        self.tab.run_query()
         self.assertEqual(self.tab.table.rowCount(), 3)
         self.assertEqual(self.tab.table.columnCount(), 4)
 
@@ -221,7 +221,7 @@ class TestMainWindow(unittest.TestCase):
         block comment
         */ limit 3 '''
         self._prepare_query_text(sql_query_string)
-        self.tab.execute_sql()
+        self.tab.run_query()
         self.assertTrue(self.tab.table.isVisible())
         self.assertEqual(self.tab.table.rowCount(), 3)
         self.assertEqual(self.tab.table.columnCount(), 1)
@@ -233,7 +233,7 @@ class TestMainWindow(unittest.TestCase):
         self.tab = self._add_new_query_tab()
         sql_query_string = 'SELECT name FROM streets LIMIT 3\n UPDATE'
         self._prepare_query_text(sql_query_string)
-        self.tab.execute_sql()
+        self.tab.run_query()
         self.assertTrue(self.tab.errors_panel.isVisible())
         self.assertIn('UPDATE', self.tab.errors_panel.toPlainText())
 
@@ -244,7 +244,7 @@ class TestMainWindow(unittest.TestCase):
         self.assertEqual(self.tab.query.textCursor().selectedText(),
                          sql_query_string[:32])
 
-        self.tab.execute_sql()
+        self.tab.run_query()
         self.assertFalse(self.tab.errors_panel.isVisible())
         self.assertTrue(self.tab.table.isVisible())
         self.assertEqual(self.tab.table.rowCount(), 3)
@@ -300,11 +300,11 @@ class TestMainWindow(unittest.TestCase):
         """execute SQL query in the current tab"""
         self.tab = self.ui.tab_widget.currentWidget()
         if user_gdb:
-            self.tab.gdb = user_gdb
+            self.tab.gdb = GDB(user_gdb)
         else:
             self.tab.gdb = self.local_gdb
         self.tab.query.setPlainText(sql)
-        self.tab.execute_sql()
+        self.tab.run_query()
         return
 
     #----------------------------------------------------------------------
