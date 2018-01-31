@@ -5,7 +5,7 @@
 If you are a QGIS Desktop user, you are already able to execute SQL against file geodatabases using [QGIS DBManager plugin](https://docs.qgis.org/2.14/en/docs/user_manual/plugins/plugins_db_manager.html), but `GDBee` has some extra features that the DBManager is missing (for instance, you do not need to add your datasets as layers first and you can choose to copy individual cells instead of the whole row) from the result table.
 
 <p align="center">
-  <img src="https://user-images.githubusercontent.com/7373268/35136490-38c68d76-fce4-11e7-8f16-780b18b055e5.png" alt="GDBee window"/>
+  <img src="https://user-images.githubusercontent.com/7373268/35639024-1e74b39c-06b9-11e8-994c-837a1713fc64.png" alt="GDBee window"/>
 </p>
 
 ## History
