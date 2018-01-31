@@ -46,7 +46,7 @@ https://github.com/baoboa/pyqt5/blob/master/examples/richtext/syntaxhighlighter.
 '''
 
 import io
-from PyQt5.QtCore import Qt, QRegExp, QRegularExpression
+from PyQt5.QtCore import Qt, QRegExp
 from PyQt5.QtGui import (QTextCharFormat, QColor, QFont, QSyntaxHighlighter)
 
 
@@ -104,11 +104,7 @@ class Highlighter(QSyntaxHighlighter):
         self.highlight_rules.append((regex, numeric_format))
 
         #TODO: highlight parens around such as st_x(shape)
-
-        # single- and multi-line comments to show as green
-        single_line_comment_format = QTextCharFormat()
-        single_line_comment_format.setForeground(Qt.darkGreen)
-        self.highlight_rules.append((QRegExp("--[^\n]*"), single_line_comment_format))
+        self.set_highlight_rules_comments()
 
         self.multi_line_comment_format = QTextCharFormat()
         self.multi_line_comment_format.setForeground(Qt.darkGreen)
@@ -130,6 +126,14 @@ class Highlighter(QSyntaxHighlighter):
         return
 
     #----------------------------------------------------------------------
+    def set_highlight_rules_comments(self):
+        """single- and multi-line comments to show as green"""
+        single_line_comment_format = QTextCharFormat()
+        single_line_comment_format.setForeground(Qt.darkGreen)
+        self.highlight_rules.append((QRegExp("--[^\n]*"), single_line_comment_format))
+        return
+
+    #----------------------------------------------------------------------
     def set_highlight_rules_gdb_items(self, items, item_type):
         """update highlight rules to include gdb datasets"""
         for item in items:
@@ -139,6 +143,10 @@ class Highlighter(QSyntaxHighlighter):
             regexp = QRegExp('\\b{}\\b'.format(item))
             regexp.setCaseSensitivity(Qt.CaseInsensitive)
             self.highlight_rules.append((regexp, fmt))
+
+        # need to put the single line comment rules afterwards; otherwise table names
+        # are highlighted even when are part of a comment
+        self.set_highlight_rules_comments()
         return
 
     #----------------------------------------------------------------------

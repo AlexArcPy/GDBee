@@ -5,6 +5,7 @@ from PyQt5.QtWidgets import (QTabWidget, QAction, QToolButton, QMessageBox)
 from PyQt5.QtCore import Qt
 
 from tab import Tab
+from geodatabase import Geodatabase as GDB
 from cfg import dev_mode, not_connected_to_gdb_message
 
 
@@ -43,25 +44,27 @@ class TabWidget(QTabWidget):
         self.latest_query_index += 1
         self.addTab(empty_tab, 'Query {}'.format(self.latest_query_index))
         if self.tabBar().count() > 1:
-            current_tab_gdb = self.widget(self.currentIndex()).gdb
+            current_tab_gdb = getattr(self.widget(self.currentIndex()), 'gdb', None)
             if current_tab_gdb:
                 empty_tab.gdb = current_tab_gdb
                 empty_tab.connected_gdb_path_label.setText(
-                    self.widget(self.currentIndex()).gdb)
+                    self.widget(self.currentIndex()).gdb.path)
                 empty_tab.connect_to_geodatabase(evt=None, triggered_with_browse=False)
+                empty_tab._fill_toc()
             else:  # the first tab
-                empty_tab.connected_gdb_path_label.setText(
-                    not_connected_to_gdb_message)
+                empty_tab.connected_gdb_path_label.setText(not_connected_to_gdb_message)
 
         self.setCurrentWidget(empty_tab)  # focus on the newly added tab
         # focus on the query text panel to be able to start typing directly
         empty_tab.query.setFocus()
 
         if dev_mode:
-            empty_tab.gdb = r'NYC.gdb'
-            empty_tab.connected_gdb_path_label.setText(empty_tab.gdb)
+            empty_tab.gdb = GDB('NYC.gdb')
+            empty_tab.connected_gdb_path_label.setText(empty_tab.gdb.path)
+            empty_tab._set_gdb_items_highlight()
+            empty_tab._fill_toc()
             empty_tab.query.setText('select * from streets limit 5')
-            empty_tab.execute_sql()
+            empty_tab.run_query()
 
         return
 

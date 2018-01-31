@@ -2,21 +2,23 @@
 '''Tab in the tabbed window'''
 
 import re
-import ogr
 import time
-import pandas as pd
+import itertools
+import ogr
 
 from highlighter import Highlighter
 from text_editor import TextEditor
 from completer import Completer
 from table import ResultTable
-from cfg import dev_mode, not_connected_to_gdb_message
+from cfg import not_connected_to_gdb_message
+from geodatabase import Geodatabase as GDB
 
-from PyQt5.QtWidgets import (QWidget, QHBoxLayout, QTableWidget, QAction, QPlainTextEdit,
-                             QSplitter, QApplication, QStyleFactory, QTableWidgetItem,
-                             QLabel, QPushButton, QToolBar, QFileDialog, QMessageBox)
-from PyQt5.QtCore import Qt, QMargins, QEvent, QRegExp
-from PyQt5.QtGui import QKeySequence, QFont, QTextCharFormat
+from PyQt5.QtWidgets import (QWidget, QVBoxLayout, QAction,
+                             QPlainTextEdit, QSplitter, QApplication, QStyleFactory,
+                             QTableWidgetItem, QLabel, QPushButton, QToolBar, QFileDialog,
+                             QMessageBox, QTreeWidget, QTreeWidgetItem)
+from PyQt5.QtCore import Qt, QMargins
+from PyQt5.QtGui import QKeySequence, QFont
 
 
 ########################################################################
@@ -31,12 +33,14 @@ class Tab(QWidget):
         self.block_comment_re = re.compile(
             r'(^)?[^\S\n]*/(?:\*(.*?)\*/[^\S\n]*|/[^\n]*)($)?', re.DOTALL | re.MULTILINE)
 
-        # dialect for SQL queries against file geodatabase
-        self.dialect = 'SQLITE'  # default is 'OGRSQL' which is less capable
-
         ogr.UseExceptions()
-        main_layout = QHBoxLayout(self)
-        self.gdb = ''
+        main_layout = QVBoxLayout(self)
+
+        # define gdb props
+        self.gdb = None
+        self.gdb_items = None
+        self.gdb_columns_names = None
+        self.gdb_schemas = None
 
         # connected geodatabase path toolbar
         self.connected_gdb_path_label = QLabel('')
@@ -63,7 +67,7 @@ class Tab(QWidget):
         # execute SQL query
         self.execute = QAction('Execute', self)
         self.execute.setShortcuts([QKeySequence('F5'), QKeySequence('Ctrl+Return')])
-        self.execute.triggered.connect(self.execute_sql)
+        self.execute.triggered.connect(self.run_query)
         self.addAction(self.execute)
 
         # enter a SQL query
@@ -106,7 +110,22 @@ class Tab(QWidget):
         splitter.setStretchFactor(0, 3)
         splitter.setStretchFactor(1, 7)
 
-        main_layout.addWidget(splitter)
+        # TOC
+        self.toc = QTreeWidget()
+        self.toc.setHeaderHidden(True)
+        toc_hide_action = QAction('Hide TOC', self)
+        toc_hide_action.setShortcuts(QKeySequence('F1'))
+        toc_hide_action.triggered.connect(self._do_toc_hide_show)
+        self.addAction(toc_hide_action)
+
+        # second splitter between the TOC to the left and the query/table to the right
+        toc_splitter = QSplitter(Qt.Horizontal)
+        toc_splitter.addWidget(self.toc)
+        toc_splitter.addWidget(splitter)
+        toc_splitter.setCollapsible(0, True)
+        toc_splitter.setSizes((200, 800))  # set the TOC vs data panel
+
+        main_layout.addWidget(toc_splitter)
 
         margins = QMargins()
         margins.setBottom(10)
@@ -132,10 +151,11 @@ class Tab(QWidget):
             # TODO: add a filter to show only .gdb folders?
             # https://stackoverflow.com/questions/4893122/filtering-in-qfiledialog
             if gdb_path and gdb_path.endswith('.gdb'):
-                if self._gdb_is_valid(gdb_path):
-                    self.gdb = gdb_path
-                    self.connected_gdb_path_label.setText(self.gdb)
+                self.gdb = GDB(gdb_path)
+                if self.gdb.is_valid():
+                    self.connected_gdb_path_label.setText(self.gdb.path)
                     self._set_gdb_items_highlight()
+                    self._fill_toc()
                 else:
                     msg = QMessageBox()
                     msg.setText("This is not a valid file geodatabase")
@@ -143,19 +163,9 @@ class Tab(QWidget):
                     msg.setStandardButtons(QMessageBox.Ok)
                     msg.exec_()
         else:
-            if self._gdb_is_valid(self.gdb):
+            if self.gdb.is_valid():
                 self._set_gdb_items_highlight()
-        return
 
-    #----------------------------------------------------------------------
-    def _set_gdb_items_highlight(self):
-        """set completer and highlight properties for gdb items"""
-        self.gdb_items = self._get_gdb_items()
-        self.highlighter.set_highlight_rules_gdb_items(self.gdb_items, 'Table')
-
-        self.gdb_columns = self._get_gdb_columns()
-        self.completer.update_completer_string_list(self.gdb_items + self.gdb_columns)
-        self.highlighter.set_highlight_rules_gdb_items(self.gdb_columns, 'Column')
         return
 
     #----------------------------------------------------------------------
@@ -171,15 +181,13 @@ class Tab(QWidget):
         return
 
     #----------------------------------------------------------------------
-    def execute_sql(self):
-        """execute SQL query and draw the record set and call table drawing"""
-        # http://gdal.org/python/osgeo.ogr.DataSource-class.html#ExecuteSQL
+    def run_query(self):
+        """run SQL query and draw the record set and call table drawing"""
         if not self.gdb:
             self.print_sql_execute_errors(not_connected_to_gdb_message)
             return
         try:
-            ds = ogr.Open(self.gdb, 0)  # read-only mode
-            if not ds:
+            if not self.gdb.is_valid():
                 return
 
             # use the text of what user selected, if none -> need to run the whole query
@@ -195,17 +203,12 @@ class Tab(QWidget):
                 return
 
             QApplication.setOverrideCursor(Qt.WaitCursor)
-            try:
-                res = None
-                if self.dialect == 'SQLITE':
-                    do_commit_transaction = False
-                start_time = time.time()
-                res = ds.ExecuteSQL(sql_query, dialect=self.dialect)
-                end_time = time.time()
-                if do_commit_transaction:
-                    res.CommitTransaction()
-            except Exception as err:
-                self.print_sql_execute_errors(err.args[0])
+            start_time = time.time()
+            self.gdb.open_connection()
+            res, errors = self.gdb.execute_sql(sql_query)
+            end_time = time.time()
+            if errors:
+                self.print_sql_execute_errors(errors)
 
             if res:
                 self.table.show()
@@ -222,8 +225,7 @@ class Tab(QWidget):
             print(err)
         finally:
             QApplication.restoreOverrideCursor()
-            if ds:
-                ds.Destroy()
+            self.gdb.close_connection()
         return
 
     #----------------------------------------------------------------------
@@ -304,36 +306,49 @@ class Tab(QWidget):
         return
 
     #----------------------------------------------------------------------
-    def _get_gdb_items(self):
-        """get list of tables and feature classes inside a file gdb"""
-        ds = ogr.Open(self.gdb, 0)
-        return list(
-            set([ds.GetLayerByIndex(i).GetName() for i in range(0, ds.GetLayerCount())]))
+    def _set_gdb_items_highlight(self):
+        """set completer and highlight properties for gdb items"""
+        self.gdb_items = self.gdb.get_items()
+        self.highlighter.set_highlight_rules_gdb_items(self.gdb_items, 'Table')
+
+        self.gdb_schemas = self.gdb.get_schemas()
+        self.gdb_columns_names = sorted(
+            list(set(itertools.chain.from_iterable(self.gdb_schemas.values()))),
+            key=lambda x: x.lower())
+        self.completer.update_completer_string_list(self.gdb_items +
+                                                    self.gdb_columns_names)
+        self.highlighter.set_highlight_rules_gdb_items(self.gdb_columns_names, 'Column')
+        return
 
     #----------------------------------------------------------------------
-    def _get_gdb_columns(self):
-        """get list of all columns in all tables and feature classes inside a file gdb"""
-        ds = ogr.Open(self.gdb, 0)
-        all_cols_names = []
-        for item in self.gdb_items:
-            lyr = ds.GetLayerByName(item)
-            geom_col = lyr.GetGeometryColumn()
-            all_cols_names.extend([col.GetName() for col in lyr.schema])
-            all_cols_names += [geom_col] if geom_col is not '' else []
-        return list(set(all_cols_names))
-
-    #----------------------------------------------------------------------
-    def _gdb_is_valid(self, gdb_path):
-        """check if .gdb folder provided by user is a valid file gdb"""
+    def _fill_toc(self):
+        """fill TOC with geodatabase datasets and columns"""
+        self.toc.clear()
         try:
-            ds = ogr.Open(gdb_path, 0)
+            self.gdb_items
         except:
-            return False
+            return
 
-        if ds:
-            ds.Destroy()
-            return True
-        return False
+        for tbl in sorted(self.gdb_items, key=lambda i: i.lower()):
+            item = QTreeWidgetItem([tbl.title()])
+            font = QFont()
+            font.setBold(True)
+            item.setFont(0, font)
+
+            for col in sorted(self.gdb_schemas[tbl], key=lambda i: i.lower()):
+                item_child = QTreeWidgetItem([col.title()])
+                item.addChild(item_child)
+            self.toc.addTopLevelItem(item)
+        return
+
+    #----------------------------------------------------------------------
+    def _do_toc_hide_show(self):
+        """hide TOC with tables and columns"""
+        if self.toc.isVisible():
+            self.toc.setVisible(False)
+        else:
+            self.toc.setVisible(True)
+        return
 
     #----------------------------------------------------------------------
     def _strip_block_comments(self, sql_query):
