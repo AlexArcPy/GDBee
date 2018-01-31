@@ -324,9 +324,7 @@ class Tab(QWidget):
     def _fill_toc(self):
         """fill TOC with geodatabase datasets and columns"""
         self.toc.clear()
-        try:
-            self.gdb_items
-        except:
+        if not self.gdb_items:
             return
 
         for tbl in sorted(self.gdb_items, key=lambda i: i.lower()):
