@@ -113,10 +113,6 @@ class Tab(QWidget):
         # TOC
         self.toc = QTreeWidget()
         self.toc.setHeaderHidden(True)
-        toc_hide_action = QAction('Hide TOC', self)
-        toc_hide_action.setShortcuts(QKeySequence('F1'))
-        toc_hide_action.triggered.connect(self._do_toc_hide_show)
-        self.addAction(toc_hide_action)
 
         # second splitter between the TOC to the left and the query/table to the right
         toc_splitter = QSplitter(Qt.Horizontal)
@@ -155,6 +151,7 @@ class Tab(QWidget):
                 if self.gdb.is_valid():
                     self.connected_gdb_path_label.setText(self.gdb.path)
                     self._set_gdb_items_highlight()
+                    self._set_gdb_items_complete()
                     self._fill_toc()
                 else:
                     msg = QMessageBox()
@@ -165,6 +162,7 @@ class Tab(QWidget):
         else:
             if self.gdb.is_valid():
                 self._set_gdb_items_highlight()
+                self._set_gdb_items_complete()
 
         return
 
@@ -261,6 +259,7 @@ class Tab(QWidget):
         columns_names = [field.name for field in res.schema]
         self.table.columns_names = columns_names
         if geom_col_name and self.result_should_include_geometry():
+            wkt = None
             columns_names.append(geom_col_name)
         self.nbcol = len(columns_names)
 
@@ -276,11 +275,13 @@ class Tab(QWidget):
                 col_num = 0
                 for col_name in columns_names:
                     if col_name == geom_col_name:
-                        wkt = feat.geometry().ExportToWkt()
-                        if len(wkt) > 60:
-                            cell_value = wkt[:60] + '...'
-                        else:
-                            cell_value = wkt
+                        geom = feat.geometry()
+                        if geom:
+                            wkt = geom.ExportToWkt()
+                            if len(wkt) > 60:
+                                cell_value = wkt[:60] + '...'
+                            else:
+                                cell_value = wkt
                     else:
                         cell_value = attrs_dict[col_name]
 
@@ -315,6 +316,10 @@ class Tab(QWidget):
         self.gdb_columns_names = sorted(
             list(set(itertools.chain.from_iterable(self.gdb_schemas.values()))),
             key=lambda x: x.lower())
+
+    #----------------------------------------------------------------------
+    def _set_gdb_items_complete(self):
+        """update completer rules to include gdb items"""
         self.completer.update_completer_string_list(self.gdb_items +
                                                     self.gdb_columns_names)
         self.highlighter.set_highlight_rules_gdb_items(self.gdb_columns_names, 'Column')
@@ -334,7 +339,7 @@ class Tab(QWidget):
             item.setFont(0, font)
 
             for col in sorted(self.gdb_schemas[tbl], key=lambda i: i.lower()):
-                item_child = QTreeWidgetItem([col.title()])
+                item_child = QTreeWidgetItem([col.title() if col.islower() or col.isupper() else col])
                 item.addChild(item_child)
             self.toc.addTopLevelItem(item)
         return

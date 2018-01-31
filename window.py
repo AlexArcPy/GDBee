@@ -18,7 +18,7 @@ else:
 from PyQt5.QtWidgets import (QMainWindow, QAction, QFileDialog, QMessageBox, QTextEdit,
                              QApplication)
 from PyQt5.Qt import Qt
-from PyQt5.QtGui import QIcon
+from PyQt5.QtGui import QIcon, QKeySequence
 from tab_widget import TabWidget
 
 from cfg import project_name
@@ -74,14 +74,18 @@ class Window(QMainWindow):
 
         # TOC menu
         toc_menu = menu.addMenu("&Schemas")
+        toc_hide_action = QAction("&Hide/show panel", self)
+        toc_hide_action.setShortcuts(QKeySequence('F1'))
+        toc_hide_action.triggered.connect(
+            lambda x: self.tab_widget.currentWidget()._do_toc_hide_show())
 
         toc_expand_action = QAction("&Expand all", self)
-        toc_expand_action.triggered.connect(
-            lambda x: self.tab_widget.currentWidget().toc.expandAll())
-        toc_collapse_action = QAction("&Collapse all", self)
-        toc_collapse_action.triggered.connect(
-            lambda x: self.tab_widget.currentWidget().toc.collapseAll())
+        toc_expand_action.triggered.connect(self.toc_expand_all)
 
+        toc_collapse_action = QAction("&Collapse all", self)
+        toc_collapse_action.triggered.connect(self.toc_collapse_all)
+
+        toc_menu.addAction(toc_hide_action)
         toc_menu.addAction(toc_expand_action)
         toc_menu.addAction(toc_collapse_action)
 
@@ -227,3 +231,19 @@ class Window(QMainWindow):
                 current_tab = self.tab_widget.widget(self.tab_widget.currentIndex())
                 current_tab.query.document().setPlainText(''.join(query))
         return
+
+    #----------------------------------------------------------------------
+    def toc_expand_all(self):
+        """expand all items in the schemas panel"""
+        try:
+            self.tab_widget.currentWidget().toc.expandAll()
+        except:
+            return
+
+    #----------------------------------------------------------------------
+    def toc_collapse_all(self):
+        """collapse all items in the schemas panel"""
+        try:
+            self.tab_widget.currentWidget().toc.collapseAll()
+        except:
+            return

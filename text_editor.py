@@ -64,7 +64,7 @@ class TextEditor(QTextEdit):
         ]
         # excluding `_` as this is often in SQL spatial functions
         self.special_chars = "~!@#$%^&*()+{}|:\"<>?,./;'[]\\-="
-        self.completion_after_chars = 2
+        self.completion_after_chars = 3
         return
 
     #----------------------------------------------------------------------
