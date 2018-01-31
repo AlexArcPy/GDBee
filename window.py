@@ -76,8 +76,7 @@ class Window(QMainWindow):
         toc_menu = menu.addMenu("&Schemas")
         toc_hide_action = QAction("&Hide/show panel", self)
         toc_hide_action.setShortcuts(QKeySequence('F1'))
-        toc_hide_action.triggered.connect(
-            lambda x: self.tab_widget.currentWidget()._do_toc_hide_show())
+        toc_hide_action.triggered.connect(self._do_toc_hide_show)
 
         toc_expand_action = QAction("&Expand all", self)
         toc_expand_action.triggered.connect(self.toc_expand_all)
@@ -247,3 +246,12 @@ class Window(QMainWindow):
             self.tab_widget.currentWidget().toc.collapseAll()
         except:
             return
+
+    #----------------------------------------------------------------------
+    def _do_toc_hide_show(self):
+        """hide or show toc panel"""
+        try:
+            self.tab_widget.currentWidget()._do_toc_hide_show()
+        except:
+            pass
+
