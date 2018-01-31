@@ -12,6 +12,7 @@ from PyQt5.QtTest import QTest
 from window import Window
 from geodatabase import Geodatabase as GDB
 
+
 ########################################################################
 class TestMainWindow(unittest.TestCase):
     """Test interface of the GDBee application"""
@@ -285,6 +286,43 @@ class TestMainWindow(unittest.TestCase):
         """test select and copy a WKT column cell value into a clipboard"""
         # TODO: copied value should be a valid WKT; the cell value should
         # be shortened with `...` in the end
+        return
+
+    #----------------------------------------------------------------------
+    def test_filling_toc(self):
+        """test fill the toc with gdb tables and their columns"""
+        self.tab = self._add_new_query_tab()
+        sql_query_string = 'SELECT name FROM streets LIMIT 3'
+        self._execute_sql(sql_query_string)
+        self.tab._set_gdb_items_highlight()
+        self.tab._fill_toc()
+        self.assertEqual(
+            sorted([i.lower() for i in self.tab.gdb_items]),
+            sorted([
+                self.tab.toc.topLevelItem(i).text(0).lower()
+                for i in range(self.tab.toc.topLevelItemCount())
+            ]))
+        return
+
+    #----------------------------------------------------------------------
+    def test_expand_collapse_toc(self):
+        """test expand and collapse all items in the toc"""
+        self.tab = self._add_new_query_tab()
+        sql_query_string = 'SELECT name FROM streets LIMIT 3'
+        self._execute_sql(sql_query_string)
+        self.tab._set_gdb_items_highlight()
+        self.tab._fill_toc()
+        self.ui.toc_expand_all()
+        self.assertTrue(
+            all([
+                self.tab.toc.topLevelItem(i).isExpanded()
+                for i in range(self.tab.toc.topLevelItemCount())
+            ]))
+        self.ui.toc_collapse_all()
+        self.assertTrue(not any([
+            self.tab.toc.topLevelItem(i).isExpanded()
+            for i in range(self.tab.toc.topLevelItemCount())
+        ]))
         return
 
     #----------------------------------------------------------------------
