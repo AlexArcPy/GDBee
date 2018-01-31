@@ -55,14 +55,14 @@ class Window(QMainWindow):
         self.statusBar().showMessage("")
 
         menu = self.menuBar()
-        file_menu = menu.addMenu("&File")
 
+        # File menu
+        file_menu = menu.addMenu("&File")
         menus = [
             ("&New query", "Ctrl+N", self.open_new_tab, False),
             ("&Save query", "Ctrl+S", self.save_query_to_file, False),
             ("&Open query", "Ctrl+O", self.open_query_from_file, False),
         ]
-
         for cmd_name, shortcut, connected_func, separator in menus:
             action = QAction(cmd_name, self)
             if shortcut:
@@ -72,6 +72,20 @@ class Window(QMainWindow):
             if separator:
                 file_menu.addSeparator()
 
+        # TOC menu
+        toc_menu = menu.addMenu("&Schemas")
+
+        toc_expand_action = QAction("&Expand all", self)
+        toc_expand_action.triggered.connect(
+            lambda x: self.tab_widget.currentWidget().toc.expandAll())
+        toc_collapse_action = QAction("&Collapse all", self)
+        toc_collapse_action.triggered.connect(
+            lambda x: self.tab_widget.currentWidget().toc.collapseAll())
+
+        toc_menu.addAction(toc_expand_action)
+        toc_menu.addAction(toc_collapse_action)
+
+        # Result menu
         result_menu = menu.addMenu("&Result")
         result_export_menu = result_menu.addMenu("Export to")
         result_export_menu.setToolTipsVisible(True)
