@@ -4,7 +4,6 @@
 import re
 import time
 import itertools
-import ogr
 
 from highlighter import Highlighter
 from text_editor import TextEditor
@@ -33,7 +32,6 @@ class Tab(QWidget):
         self.block_comment_re = re.compile(
             r'(^)?[^\S\n]*/(?:\*(.*?)\*/[^\S\n]*|/[^\n]*)($)?', re.DOTALL | re.MULTILINE)
 
-        ogr.UseExceptions()
         main_layout = QVBoxLayout(self)
 
         # define gdb props

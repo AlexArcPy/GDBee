@@ -2,6 +2,7 @@
 '''Geodatabase class representing a file geodatabase object'''
 
 import ogr
+ogr.UseExceptions()
 
 
 ########################################################################
