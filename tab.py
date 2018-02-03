@@ -12,10 +12,9 @@ from table import ResultTable
 from cfg import not_connected_to_gdb_message
 from geodatabase import Geodatabase as GDB
 
-from PyQt5.QtWidgets import (QWidget, QVBoxLayout, QAction,
-                             QPlainTextEdit, QSplitter, QApplication, QStyleFactory,
-                             QTableWidgetItem, QLabel, QPushButton, QToolBar, QFileDialog,
-                             QMessageBox, QTreeWidget, QTreeWidgetItem)
+from PyQt5.QtWidgets import (QWidget, QVBoxLayout, QAction, QPlainTextEdit, QSplitter,
+                             QApplication, QStyleFactory, QLabel, QPushButton, QToolBar,
+                             QFileDialog, QMessageBox, QTreeWidget, QTreeWidgetItem)
 from PyQt5.QtCore import Qt, QMargins
 from PyQt5.QtGui import QKeySequence, QFont
 
@@ -58,9 +57,6 @@ class Tab(QWidget):
 
         # table with results
         self.table = ResultTable()
-        self.nbrow, self.nbcol = 0, 0
-        self.table.setRowCount(self.nbrow)
-        self.table.setColumnCount(self.nbcol)
 
         # execute SQL query
         self.execute = QAction('Execute', self)
@@ -107,6 +103,8 @@ class Tab(QWidget):
         splitter.setCollapsible(3, False)
         splitter.setStretchFactor(0, 3)
         splitter.setStretchFactor(1, 7)
+        splitter.setSizes((100, 200, 300))
+        self.table.hide()
 
         # TOC
         self.toc = QTreeWidget()
@@ -210,8 +208,7 @@ class Tab(QWidget):
                 self.table.show()
                 self.errors_panel.hide()
                 # TODO: any faster way to count features?
-                self.nbrow = len(res)
-                # TODO: add pagination for quicker drawing
+                #self.nbrow = len(res)
                 self.draw_result_table(res)
                 msg = "Executed in {:.1f} secs | {} rows".format(
                     end_time - start_time, len(res))
@@ -221,7 +218,7 @@ class Tab(QWidget):
             print(err)
         finally:
             QApplication.restoreOverrideCursor()
-            self.gdb.close_connection()
+            #self.gdb.close_connection()
         return
 
     #----------------------------------------------------------------------
@@ -246,54 +243,11 @@ class Tab(QWidget):
     #----------------------------------------------------------------------
     def draw_result_table(self, res):
         """draw table with the record set received from the database"""
-        self.table.verticalHeader().show()
-        self.table.horizontalHeader().show()
-        self.table.setShowGrid(True)
-
-        # TODO: how to make shape field appear in the right order?
-        # currently always in the end
         geom_col_name = res.GetGeometryColumn()  # shape col was in the sql query
         self.geometry_isin_query = bool(geom_col_name)
-        columns_names = [field.name for field in res.schema]
-        self.table.columns_names = columns_names
-        if geom_col_name and self.result_should_include_geometry():
-            wkt = None
-            columns_names.append(geom_col_name)
-        self.nbcol = len(columns_names)
 
-        self.table.setRowCount(self.nbrow)
-        self.table.setColumnCount(self.nbcol)
-        self.table.setHorizontalHeaderLabels(columns_names)
-
-        row_num = 0
-        for i in range(0, self.nbrow):
-            feat = res.GetNextFeature()
-            if feat:
-                attrs_dict = feat.items()
-                col_num = 0
-                for col_name in columns_names:
-                    if col_name == geom_col_name:
-                        geom = feat.geometry()
-                        if geom:
-                            wkt = geom.ExportToWkt()
-                            if len(wkt) > 60:
-                                cell_value = wkt[:60] + '...'
-                            else:
-                                cell_value = wkt
-                    else:
-                        cell_value = attrs_dict[col_name]
-
-                    cell = QTableWidgetItem(str(cell_value))
-                    if col_name == geom_col_name:
-                        cell._wkt = wkt
-                    cell.setFlags(Qt.ItemIsSelectable | Qt.ItemIsEnabled)
-                    self.table.setItem(row_num, col_num, cell)
-
-                    col_num += 1
-                row_num += 1
-
-        self.table.resizeColumnsToContents()
-        self.table.resizeRowsToContents()
+        self.table.draw_result(
+            res, show_shapes=bool(self.result_should_include_geometry()))
         return
 
     #----------------------------------------------------------------------
@@ -337,7 +291,8 @@ class Tab(QWidget):
             item.setFont(0, font)
 
             for col in sorted(self.gdb_schemas[tbl], key=lambda i: i.lower()):
-                item_child = QTreeWidgetItem([col.title() if col.islower() or col.isupper() else col])
+                item_child = QTreeWidgetItem(
+                    [col.title() if col.islower() or col.isupper() else col])
                 item.addChild(item_child)
             self.toc.addTopLevelItem(item)
         return

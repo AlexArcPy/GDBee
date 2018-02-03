@@ -63,7 +63,7 @@ class TabWidget(QTabWidget):
             empty_tab.connected_gdb_path_label.setText(empty_tab.gdb.path)
             empty_tab._set_gdb_items_highlight()
             empty_tab._fill_toc()
-            empty_tab.query.setText('select * from streets limit 5')
+            empty_tab.query.setText('select * from streets limit 1000')
             empty_tab.run_query()
 
         return
