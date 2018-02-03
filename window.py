@@ -21,7 +21,7 @@ from PyQt5.Qt import Qt
 from PyQt5.QtGui import QIcon, QKeySequence
 from tab_widget import TabWidget
 
-from cfg import project_name
+from cfg import project_name, test_mode
 
 
 ########################################################################
@@ -106,6 +106,8 @@ class Window(QMainWindow):
         export_action_md = result_export_menu.addAction("&Markdown")
         export_action_md.setToolTip('Get table formatted in Markdown')
 
+        # TODO Query menu - load all rows in the table view (Ctrl-End)
+
         option = None
         export_action_qgis.triggered.connect(
             lambda evt, arg=option: self.export_result(evt, export_action_qgis.text()))
@@ -139,8 +141,12 @@ class Window(QMainWindow):
 
         current_tab = self.tab_widget.widget(self.tab_widget.currentIndex())
         try:
-            if not current_tab.table.rowCount():
-                raise
+            if not test_mode:
+                if not current_tab.table.table_data.rowCount():
+                    raise
+            else:
+                if not current_tab.table.table_data.number_layer_rows:
+                    raise
         except:
             return
 

@@ -82,8 +82,9 @@ class TestMainWindow(unittest.TestCase):
         self.tab = self._add_new_query_tab()
         self.assertEqual(self._get_tabs_count(), 1)
         self._execute_sql('SELECT Name, Type, Oneway FROM streets LIMIT 3')
-        self.assertEqual(self.tab.table.rowCount(), 3)
-        self.assertEqual(self.tab.table.columnCount(), 3)
+        self.assertEqual(self.tab.table.table_data.headers, ['NAME', 'TYPE', 'ONEWAY'])
+        self.assertEqual(self.tab.table.table_data.number_layer_rows, 3)
+        self.assertEqual(self.tab.table.table_data.columnCount(), 3)
         return
 
     #----------------------------------------------------------------------
@@ -102,54 +103,59 @@ class TestMainWindow(unittest.TestCase):
             'SELECT Name, Type, Oneway, Shape FROM streets LIMIT 3')
 
         self.tab.run_query()
-        self.assertEqual(self.tab.table.rowCount(), 3)
-        self.assertEqual(self.tab.table.columnCount(), 4)
+        self.assertEqual(self.tab.table.table_data.number_layer_rows, 3)
+        self.assertEqual(self.tab.table.table_data.columnCount(), 4)
 
         # enable getting geometry columns into the output
         self.ui.do_include_geometry.setChecked(False)
         self.assertFalse(self.ui.do_include_geometry.isChecked())
 
         self.tab.run_query()
-        self.assertEqual(self.tab.table.rowCount(), 3)
-        self.assertEqual(self.tab.table.columnCount(), 3)
+        self.assertEqual(self.tab.table.table_data.number_layer_rows, 3)
+        self.assertEqual(self.tab.table.table_data.columnCount(), 3)
         return
 
     #----------------------------------------------------------------------
-    def test_exports(self):
-        """export result of SQL query execution in various formats"""
-        self.assertEqual(self._get_tabs_count(), 0)
-        self.tab = self._add_new_query_tab()
-        self.assertEqual(self._get_tabs_count(), 1)
-
-        self.tab.gdb = (self.local_gdb)
-        self.tab = self.ui.tab_widget.currentWidget()
-        self.tab.query.setPlainText(
-            'SELECT Name, Type, Oneway, Shape FROM streets LIMIT 3')
-
-        self.tab.run_query()
-        self.assertEqual(self.tab.table.rowCount(), 3)
-        self.assertEqual(self.tab.table.columnCount(), 4)
-
-        self.ui.export_result(None, '&Markdown')
-        self.assertEqual(
-            len(self.ui.export_result_window.result.toPlainText().split('\n')), 5)
-        self.ui.export_result_window.close()
-
-        self.ui.export_result(None, '&DataFrame')
-        self.assertIn('.csv', self.ui.export_result_window.result.toPlainText())
-        self.ui.export_result_window.close()
-
+    def test_export_qgis(self):
+        """export result of SQL query execution to a QGIS QuickWKT plugin format"""
+        self._prepare_for_export()
         self.ui.export_result(None, '&QGIS')
         self.assertEqual(
             len(self.ui.export_result_window.result.toPlainText().split('\n')), 3)
         self.assertIn('MULTILINESTRING',
                       self.ui.export_result_window.result.toPlainText())
         self.ui.export_result_window.close()
+        return
+
+    #----------------------------------------------------------------------
+    def test_export_markdown(self):
+        """export result of SQL query execution to a Markdown text"""
+        self._prepare_for_export()
+
+        self.ui.export_result(None, '&Markdown')
+        self.assertEqual(
+            len(self.ui.export_result_window.result.toPlainText().split('\n')), 5)
+        self.ui.export_result_window.close()
+        return
+
+    #----------------------------------------------------------------------
+    def test_export_pandas(self):
+        """export result of SQL query execution to a pandas data frame"""
+        self._prepare_for_export()
+
+        self.ui.export_result(None, '&DataFrame')
+        self.assertIn('.csv', self.ui.export_result_window.result.toPlainText())
+        self.ui.export_result_window.close()
+        return
+
+    #----------------------------------------------------------------------
+    def test_export_arcmap(self):
+        """export result of SQL query execution to arcpy code to use in ArcMap"""
+        self._prepare_for_export()
 
         self.ui.export_result(None, '&ArcMap')
         text = self.ui.export_result_window.result.toPlainText()
         self.assertTrue([(w in text) for w in ['arcpy', 'MULTILINESTRING']])
-
         self.ui.export_result_window.close()
         return
 
@@ -207,8 +213,8 @@ class TestMainWindow(unittest.TestCase):
         # make sure the application still works
         self.tab = self._add_new_query_tab()
         self._execute_sql('SELECT Name, Type, Oneway FROM streets LIMIT 3')
-        self.assertEqual(self.tab.table.rowCount(), 3)
-        self.assertEqual(self.tab.table.columnCount(), 3)
+        self.assertEqual(self.tab.table.table_data.number_layer_rows, 3)
+        self.assertEqual(self.tab.table.table_data.columnCount(), 3)
         return
 
     #----------------------------------------------------------------------
@@ -224,8 +230,8 @@ class TestMainWindow(unittest.TestCase):
         self._prepare_query_text(sql_query_string)
         self.tab.run_query()
         self.assertTrue(self.tab.table.isVisible())
-        self.assertEqual(self.tab.table.rowCount(), 3)
-        self.assertEqual(self.tab.table.columnCount(), 1)
+        self.assertEqual(self.tab.table.table_data.number_layer_rows, 3)
+        self.assertEqual(self.tab.table.table_data.columnCount(), 1)
         return
 
     #----------------------------------------------------------------------
@@ -248,8 +254,8 @@ class TestMainWindow(unittest.TestCase):
         self.tab.run_query()
         self.assertFalse(self.tab.errors_panel.isVisible())
         self.assertTrue(self.tab.table.isVisible())
-        self.assertEqual(self.tab.table.rowCount(), 3)
-        self.assertEqual(self.tab.table.columnCount(), 1)
+        self.assertEqual(self.tab.table.table_data.number_layer_rows, 3)
+        self.assertEqual(self.tab.table.table_data.columnCount(), 1)
         return
 
     #----------------------------------------------------------------------
@@ -331,6 +337,25 @@ class TestMainWindow(unittest.TestCase):
         self.tab.gdb = self.local_gdb
         sql_query_string = sql_query
         self.tab.query.setText(sql_query_string)
+        return
+
+    #----------------------------------------------------------------------
+    def _prepare_for_export(self):
+        """prepare data for exporting the result set"""
+
+        self.assertEqual(self._get_tabs_count(), 0)
+        self.tab = self._add_new_query_tab()
+        self.assertEqual(self._get_tabs_count(), 1)
+
+        self.tab.gdb = (self.local_gdb)
+        self.tab = self.ui.tab_widget.currentWidget()
+        self.tab.query.setPlainText(
+            'SELECT Name, Type, Oneway, Shape FROM streets LIMIT 3')
+
+        self.tab.run_query()
+        self.assertEqual(self.tab.table.table_data.number_layer_rows, 3)
+        self.assertEqual(self.tab.table.table_data.columnCount(), 4)
+
         return
 
     #----------------------------------------------------------------------
