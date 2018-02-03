@@ -15,12 +15,15 @@ This project has started as an experimental playground to see what functionality
 ## Features
 
 * Working with multiple geodatabases using multiple tabs (single geodatabase connection per tab)
+* Having a schema panel showing tables and their columns for each connected geodatabase
 * Exporting result sets into various formats (`WKT` strings to paste into QGIS using [QuickWKT plugin](https://plugins.qgis.org/plugins/QuickWKT/), `arcpy` code to paste into ArcMap Python window, `pandas` data frame via `.csv` file (which can be taken into `geopandas`), and Markdown table via `.md` file or plain text)
 * Executing SQL query with respect to the user selection (only selected text is executed)
 * Loading/saving SQL queries from and to text files on disk
-* Convenient keyboard shortcuts for query execution (`F5` and `Ctrl-Enter`) and tab interaction (`Ctrl-N` and `Ctrl-W` for opening and closing tabs)
+* Convenient keyboard shortcuts for query execution (`F5` and `Ctrl-Enter`), tab interaction (`Ctrl-N` and `Ctrl-W` for opening and closing tabs), and browsing to a geodatabase (`Ctrl-B`)
 * Copying data from the result set table (either individual cell values or row(s) with the headers preserved) - ready to paste properly into an Excel sheet
 * Choosing whether you want to have geometry column in the result set as WKT
+* Auto-completion and highlights for geodatabase tables and columns
+* Pagination of the result table to load rows on request as user scrolls down
 
 ## Limitations
 
