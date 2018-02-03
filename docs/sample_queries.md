@@ -371,3 +371,31 @@ ORDER BY
 |  9 |           2513 |            3350 |     0.0000 |
 | 10 |           2664 |            3304 |     0.0000 |
 | 11 |           3148 |            3448 |     0.0000 |
+
+#### Find which subway stations have most crimes commited within the distance of 500 meters (slow to execute)
+
+```sql
+SELECT
+    CAST(SUB.ID AS int) AS StationId,
+    SUB.Name AS SubName
+    , Count(*) AS CrimeCount
+FROM
+    homicides AS Crimes
+JOIN
+    SUBWAY_STATIONS AS SUB
+ON
+    ST_Distance(SUB.Shape, Crimes.Shape) < 500
+GROUP BY
+    SUB.ID, SUB.Name
+ORDER BY
+    CrimeCount DESC
+LIMIT 5
+```
+
+|     |   StationId | SubName                   |   CrimeCount |
+|----:|------------:|:--------------------------|-------------:|
+|   1 |          85 | Sutter Ave                |           43 |
+|   2 |         229 | Rockaway Ave              |           38 |
+|   3 |         211 | Tremont Ave               |           37 |
+|   4 |         212 | 182nd St                  |           37 |
+|   5 |         209 | 170th St                  |           36 |
