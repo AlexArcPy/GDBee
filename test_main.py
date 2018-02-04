@@ -332,6 +332,24 @@ class TestMainWindow(unittest.TestCase):
         return
 
     #----------------------------------------------------------------------
+    def test_changing_sql_dialects(self):
+        """test choosing OGR SQL dialect and execute the SQL query with
+        unsupported keyword and then change back to SQLite"""
+        self.tab = self._add_new_query_tab()
+        sql_query_string = 'SELECT name FROM streets'
+        self.tab.gdb_sql_dialect_combobox.setCurrentText('OGRSQL')
+        self._execute_sql(sql_query_string)
+        self.assertEqual(self.tab.table.table_data.number_layer_rows, 19091)
+
+        sql_query_string = 'SELECT name FROM streets limit 5'
+        self._execute_sql(sql_query_string)
+        self.assertIn('unexpected reserved keyword', self.tab.errors_panel.toPlainText())
+        self.tab.gdb_sql_dialect_combobox.setCurrentText('SQLite')
+        self._execute_sql(sql_query_string)
+        self.assertEqual(self.tab.table.table_data.number_layer_rows, 5)
+        return
+
+    #----------------------------------------------------------------------
     def _prepare_query_text(self, sql_query):
         """put SQL query string """
         self.tab.gdb = self.local_gdb
