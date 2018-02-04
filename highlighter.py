@@ -105,15 +105,10 @@ class Highlighter(QSyntaxHighlighter):
 
         #TODO: highlight parens around such as st_x(shape)
         self.set_highlight_rules_comments()
-
         self.multi_line_comment_format = QTextCharFormat()
         self.multi_line_comment_format.setForeground(Qt.darkGreen)
 
-        # strings in quotes (both single and double) to show as red
-        quote_format = QTextCharFormat()
-        quote_format.setForeground(Qt.red)
-        self.highlight_rules.append((QRegExp("\".*\""), quote_format))
-        self.highlight_rules.append((QRegExp("'.*\'"), quote_format))
+        self.set_highlight_rules_quotes()
 
         # function names to show as italic and pink
         function_format = QTextCharFormat()
@@ -123,6 +118,15 @@ class Highlighter(QSyntaxHighlighter):
 
         self.comment_start_expression = QRegExp("/\\*")
         self.comment_end_expression = QRegExp("\\*/")
+        return
+
+    #----------------------------------------------------------------------
+    def set_highlight_rules_quotes(self):
+        """strings in quotes (both single and double) to show as red"""
+        quote_format = QTextCharFormat()
+        quote_format.setForeground(Qt.red)
+        self.highlight_rules.append((QRegExp("\".*\""), quote_format))
+        self.highlight_rules.append((QRegExp("'.*\'"), quote_format))
         return
 
     #----------------------------------------------------------------------
@@ -147,6 +151,7 @@ class Highlighter(QSyntaxHighlighter):
         # need to put the single line comment rules afterwards; otherwise table names
         # are highlighted even when are part of a comment
         self.set_highlight_rules_comments()
+        self.set_highlight_rules_quotes()
         return
 
     #----------------------------------------------------------------------
