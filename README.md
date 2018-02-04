@@ -22,6 +22,7 @@ This project has started as an experimental playground to see what functionality
 * Convenient keyboard shortcuts for query execution (`F5` and `Ctrl-Enter`), tab interaction (`Ctrl-N` and `Ctrl-W` for opening and closing tabs), and browsing to a geodatabase (`Ctrl-B`)
 * Copying data from the result set table (either individual cell values or row(s) with the headers preserved) - ready to paste properly into an Excel sheet
 * Choosing whether you want to have geometry column in the result set as WKT
+* Choosing what SQL dialect to use for querying (`OGR SQL` or `SQLite`)
 * Auto-completion and highlights for geodatabase tables and columns
 * Pagination of the result table to load rows on request as user scrolls down
 
@@ -35,15 +36,25 @@ SELECT * FROM DB1.Parcels WHERE Parcels.ID in (SELECT ID FROM DB2.Parcels)
 
 * The application can be used only for selecting existing data and creating new data within the application session; you won't be able to execute any `UPDATE`, `INSERT`, or `DELETE` queries in the current version. If you want to save the generated shapes (for instance, as a result of buffering or getting vertices of polygons as points), you can use the export functionality to load the WKT representation of the shapes into an ArcMap or QGIS layer.
 
+Depending on what SQL dialect you are using and what version of `GDAL` you work with, there will be some features of the SQL language you won't be able to take advantage of. For instance, using `LIMIT` with `OGR SQL` dialect is possible only starting with `GDAL` 2.2. Native `OGR SQL` does not provide any spatial SQL functions to calculate the distances between features, get their boundaries, and so on. You would need to use `SQLite` dialect for this. You can choose what SQL dialect to use before executing the query. To learn more about these two SQL dialects, refer to these two pages:
+
+* [OGR SQL](http://www.gdal.org/ogr_sql.html)
+* [SQLite](http://www.gdal.org/ogr_sql_sqlite.html)
+
 ## Requirements
 
 * Python 3.5
-* `GDAL` 2.1.0
+* `GDAL` 2.1+
 * `PyQt5`
 * `pandas`
 * `tabulate` (optional, used for exporting result set into a markdown table)
 
 Tested against:
+
+* GDAL 2.1.3 and GDAL 2.2.3
+* PyQt 5.6.0
+
+The GDAL compilation details (can be run in the SQL query window):
 
 ```sql
 select geos_version() --3.6.2-CAPI-1.10.2 999999
@@ -51,8 +62,10 @@ select proj4_version() --Rel. 4.9.3, 15 August 2016
 select spatialite_version() --4.3.0-RC1
 ```
 
+The GDAL compilation details (can be run in Python interpreter window):
+
 ```python
-osgeo.gdal.VersionInfo() # '2010400'
+osgeo.gdal.VersionInfo() # '2010400' for GDAL 2.1.3 and '2020300' for GDAL 2.2.3
 ```
 
 ### Installation
