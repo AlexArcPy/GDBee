@@ -13,9 +13,6 @@ class Geodatabase(object):
     def __init__(self, path):
         """Constructor"""
         self.path = path
-        # default is 'OGRSQL' which is less capable;
-        # SQLITE provides spatial functions
-        self.dialect = 'SQLITE'
         self.ds = None
         return
 
@@ -69,16 +66,18 @@ class Geodatabase(object):
         return
 
     #----------------------------------------------------------------------
-    def execute_sql(self, query):
+    def execute_sql(self, query, dialect='sqlite'):
         """Execute SQL query against a geodatabase using a `ExecuteSQL` method.
-        Read more at http://gdal.org/python/osgeo.ogr.DataSource-class.html#ExecuteSQL
-        """
+        Read more at http://gdal.org/python/osgeo.ogr.DataSource-class.html#ExecuteSQL"""
+        #TODO trigger using spatial index in SQLite?
         try:
+            if not dialect:
+                dialect = 'sqlite'
             res, errors = None, None
             do_commit_transaction = True
-            if self.dialect == 'SQLITE':
+            if dialect.lower() == 'sqlite':
                 do_commit_transaction = False
-            res = self.ds.ExecuteSQL(query, dialect=self.dialect)
+            res = self.ds.ExecuteSQL(query, dialect=dialect)
             if do_commit_transaction:
                 res.CommitTransaction()
         except Exception as err:

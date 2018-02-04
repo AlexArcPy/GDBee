@@ -106,6 +106,8 @@ class Window(QMainWindow):
         export_action_md = result_export_menu.addAction("&Markdown")
         export_action_md.setToolTip('Get table formatted in Markdown')
 
+        # Query menu
+        query_menu = menu.addMenu("&Query")
         # TODO Query menu - load all rows in the table view (Ctrl-End)
 
         option = None
@@ -138,7 +140,6 @@ class Window(QMainWindow):
     #----------------------------------------------------------------------
     def export_result(self, evt, option):
         """export result set into an output format"""
-
         current_tab = self.tab_widget.widget(self.tab_widget.currentIndex())
         try:
             if not test_mode:
@@ -260,4 +261,3 @@ class Window(QMainWindow):
             self.tab_widget.currentWidget()._do_toc_hide_show()
         except:
             pass
-

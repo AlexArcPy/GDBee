@@ -9,12 +9,13 @@ from highlighter import Highlighter
 from text_editor import TextEditor
 from completer import Completer
 from table import ResultTable
-from cfg import not_connected_to_gdb_message
+from cfg import not_connected_to_gdb_message, sql_dialects_names
 from geodatabase import Geodatabase as GDB
 
 from PyQt5.QtWidgets import (QWidget, QVBoxLayout, QAction, QPlainTextEdit, QSplitter,
                              QApplication, QStyleFactory, QLabel, QPushButton, QToolBar,
-                             QFileDialog, QMessageBox, QTreeWidget, QTreeWidgetItem)
+                             QFileDialog, QMessageBox, QTreeWidget, QTreeWidgetItem,
+                             QComboBox)
 from PyQt5.QtCore import Qt, QMargins
 from PyQt5.QtGui import QKeySequence, QFont
 
@@ -41,6 +42,7 @@ class Tab(QWidget):
 
         # connected geodatabase path toolbar
         self.connected_gdb_path_label = QLabel('')
+        self.connected_gdb_path_label.setTextInteractionFlags(Qt.TextSelectableByMouse)
         self.connected_gdb_path_label.setToolTip("Connected geodatabase that queries "
                                                  "will be run against")
         self.connected_gdb_path_label.setText(not_connected_to_gdb_message)
@@ -50,10 +52,16 @@ class Tab(QWidget):
         self.browse_to_gdb.clicked.connect(lambda evt, arg=True: self.connect_to_geodatabase(
             evt, triggered_with_browse=True))
 
+        self.gdb_sql_dialect_combobox = QComboBox()
+        for dialect in sql_dialects_names:
+            self.gdb_sql_dialect_combobox.addItem(dialect)
+
         self.gdb_browse_toolbar = QToolBar()
         self.gdb_browse_toolbar.setMaximumHeight(50)
         self.gdb_browse_toolbar.addWidget(self.browse_to_gdb)
         self.gdb_browse_toolbar.addWidget(self.connected_gdb_path_label)
+        self.gdb_browse_toolbar.addSeparator()
+        self.gdb_browse_toolbar.addWidget(self.gdb_sql_dialect_combobox)
 
         # table with results
         self.table = ResultTable()
@@ -199,7 +207,8 @@ class Tab(QWidget):
             QApplication.setOverrideCursor(Qt.WaitCursor)
             start_time = time.time()
             self.gdb.open_connection()
-            res, errors = self.gdb.execute_sql(sql_query)
+            res, errors = self.gdb.execute_sql(
+                sql_query, self.gdb_sql_dialect_combobox.currentText())
             end_time = time.time()
             if errors:
                 self.print_sql_execute_errors(errors)

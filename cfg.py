@@ -8,3 +8,5 @@ test_mode = False
 
 project_name = 'GDBee'
 not_connected_to_gdb_message = 'Not connected to any geodatabase...'
+
+sql_dialects_names = ['SQLite', 'OGRSQL'] # SQLite is used by default
