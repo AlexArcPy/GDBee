@@ -36,9 +36,7 @@ class ResultTable(QMainWindow):
     #----------------------------------------------------------------------
     def draw_result(self, result, show_shapes=True):
         """load and draw result set into the table"""
-        self.layer_rows_number = len(result)
         self.table_data = ResultTableModel(result, show_shapes)
-
         self.view.setModel(self.table_data)
         self.setCentralWidget(self.view)
         self.view.installEventFilter(self)
@@ -89,7 +87,7 @@ class ResultTable(QMainWindow):
     #----------------------------------------------------------------------
     def load_all_rows(self):
         """load all layer rows into the table view"""
-        while len(self.table_data.rows) < self.layer_rows_number:
+        while len(self.table_data.rows) < self.table_data.number_layer_rows:
             self.table_data.fetchMore()
         return
 
@@ -147,6 +145,9 @@ class ResultTableModel(QAbstractTableModel):
     #----------------------------------------------------------------------
     def get_layer_number_of_rows(self):
         """get the number of rows in the returned OGR layer"""
+        # TODO: any faster way to count features?
+        # on the source tables (select * from streets is fast;
+        # on views created on-the-fly is terribly slow)
         return len(self.result)
 
     #----------------------------------------------------------------------

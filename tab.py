@@ -216,18 +216,15 @@ class Tab(QWidget):
             if res:
                 self.table.show()
                 self.errors_panel.hide()
-                # TODO: any faster way to count features?
-                #self.nbrow = len(res)
                 self.draw_result_table(res)
                 msg = "Executed in {:.1f} secs | {} rows".format(
-                    end_time - start_time, len(res))
+                    end_time - start_time, self.table.table_data.number_layer_rows)
                 self.update_app_status_bar(msg)
 
         except Exception as err:
             print(err)
         finally:
             QApplication.restoreOverrideCursor()
-            #self.gdb.close_connection()
         return
 
     #----------------------------------------------------------------------
