@@ -23,8 +23,9 @@ This project has started as an experimental playground to see what functionality
 * Copying data from the result set table (either individual cell values or row(s) with the headers preserved) - ready to paste properly into an Excel sheet
 * Choosing whether you want to have geometry column in the result set as WKT
 * Choosing what SQL dialect to use for querying (`OGR SQL` or `SQLite`)
-* Auto-completion and highlights for geodatabase tables and columns
+* Auto-completion and highlights for geodatabase tables and columns as well as SQL keywords and functions
 * Pagination of the result table to load rows on request as user scrolls down
+* Reporting query execution time and number of records returned
 
 ## Limitations
 
@@ -36,10 +37,11 @@ SELECT * FROM DB1.Parcels WHERE Parcels.ID in (SELECT ID FROM DB2.Parcels)
 
 * The application can be used only for selecting existing data and creating new data within the application session; you won't be able to execute any `UPDATE`, `INSERT`, or `DELETE` queries in the current version. If you want to save the generated shapes (for instance, as a result of buffering or getting vertices of polygons as points), you can use the export functionality to load the WKT representation of the shapes into an ArcMap or QGIS layer.
 
-Depending on what SQL dialect you are using and what version of `GDAL` you work with, there will be some features of the SQL language you won't be able to take advantage of. For instance, using `LIMIT` with `OGR SQL` dialect is possible only starting with `GDAL` 2.2. Native `OGR SQL` does not provide any spatial SQL functions to calculate the distances between features, get their boundaries, and so on. You would need to use `SQLite` dialect for this. You can choose what SQL dialect to use before executing the query. To learn more about these two SQL dialects, refer to these two pages:
+* Depending on what SQL dialect you are using and what version of `GDAL` you work with, there will be some features of the SQL language you won't be able to take advantage of. For instance, using `LIMIT` with `OGR SQL` dialect is possible only starting with `GDAL` 2.2. Native `OGR SQL` does not provide any spatial SQL functions to calculate the distances between features, get their boundaries, and so on. You would need to use `SQLite` dialect for this. You can choose what SQL dialect to use before executing the query. To learn more about these two SQL dialects, refer to these two pages: [OGR SQL](http://www.gdal.org/ogr_sql.html) and [SQLite](http://www.gdal.org/ogr_sql_sqlite.html).
 
-* [OGR SQL](http://www.gdal.org/ogr_sql.html)
-* [SQLite](http://www.gdal.org/ogr_sql_sqlite.html)
+* It is hard to achieve high performance of SQL querying without loading the data into a proper DBMS first. This application would not be an appropriate choice for tasks when you need to run cross joins calculating distances between million points. The `GDAL`'s SQL execution time depends a lot on the SQL spatial functions being used. Also, getting the length of the result set returned from the database can be slow depending on whether you are querying a single table or creating a virtual view joining multiple tables together. The performance will also be different depending on what SQL dialect (`OGRSQL` and `SQLite`) is being used. You would most likely want to use the `OGR SQL` unless you need to use SQL spatial functions.
+
+* TODO compare performance of `OGRSQL` and `SQLite`
 
 ## Requirements
 
