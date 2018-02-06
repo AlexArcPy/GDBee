@@ -3,9 +3,8 @@
 
 import unittest
 
-from PyQt5 import QtGui, QtCore
 from PyQt5.Qt import Qt
-from PyQt5.Qt import QKeySequence, QTextCursor, QModelIndex, QItemSelectionModel
+from PyQt5.Qt import QTextCursor, QModelIndex, QItemSelectionModel
 from PyQt5.QtWidgets import QApplication
 from PyQt5.QtTest import QTest
 
@@ -286,7 +285,7 @@ class TestMainWindow(unittest.TestCase):
         self._prepare_query_text(sql_query_string)
         self._execute_sql(sql_query_string)
 
-        self.tab.table.view.model().fetchMore() # need to load into `rows` from OGR layer
+        self.tab.table.view.model().fetchMore()  # need to load into `rows` from OGR layer
         self.assertEqual(len(self.tab.table.view.model().rows), 1)
         self.tab.table.view.selectRow(0)
 
@@ -305,11 +304,11 @@ class TestMainWindow(unittest.TestCase):
         self._prepare_query_text(sql_query_string)
         self._execute_sql(sql_query_string)
 
-        self.tab.table.view.model().fetchMore() # need to load into `rows` from OGR layer
+        self.tab.table.view.model().fetchMore()  # need to load into `rows` from OGR layer
         tm = self.tab.table.view.model()
         sm = self.tab.table.view.selectionModel()
-        idx = tm.index(0,0, QModelIndex())
-        sm.select(idx,  QItemSelectionModel.Select)
+        idx = tm.index(0, 0, QModelIndex())
+        sm.select(idx, QItemSelectionModel.Select)
 
         QTest.keyPress(self.tab.table.view, Qt.Key_C, Qt.ControlModifier)
         cp = self.app.clipboard().text()
