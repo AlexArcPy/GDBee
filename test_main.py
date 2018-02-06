@@ -5,7 +5,7 @@ import unittest
 
 from PyQt5 import QtGui, QtCore
 from PyQt5.Qt import Qt
-from PyQt5.Qt import QKeySequence, QTextCursor
+from PyQt5.Qt import QKeySequence, QTextCursor, QModelIndex, QItemSelectionModel
 from PyQt5.QtWidgets import QApplication
 from PyQt5.QtTest import QTest
 
@@ -35,6 +35,7 @@ class TestMainWindow(unittest.TestCase):
         self.result_menu = self.menu.actions()[1]
         self.settings_menu = self.menu.actions()[2]
         self.tab = None
+        QTest.qWaitForWindowExposed(self.ui)
         return
 
     #----------------------------------------------------------------------
@@ -43,16 +44,13 @@ class TestMainWindow(unittest.TestCase):
 
     #----------------------------------------------------------------------
     def test_create_new_query_tab(self):
-        """create a new tab"""
+        """create a new tab triggering the actions and using the keyboard"""
         self.assertEqual(self._get_tabs_count(), 0)
         self._add_new_query_tab()
         self.assertEqual(self._get_tabs_count(), 1)
 
-        # TODO nothing of this works
-        #QTest.keyClicks(self.ui.tab_widget, 'n', Qt.ControlModifier)
-        #QTest.keyPress(self.ui, Qt.Key_N, Qt.ControlModifier)
-        #QTest.keyClick(self.ui, Qt.Qt.CTRL, Qt.Qt.Key_N) #QKeySequence('Ctrl+N'))
-        #Qt.Qt.CTRL, Qt.Qt.Key_N)) #Qt.Qt.Key_F5))
+        QTest.keyPress(self.ui, Qt.Key_N, Qt.ControlModifier)
+        self.assertEqual(self._get_tabs_count(), 2)
         return
 
     #----------------------------------------------------------------------
@@ -67,12 +65,17 @@ class TestMainWindow(unittest.TestCase):
 
     #----------------------------------------------------------------------
     def test_close_current_tab(self):
-        """close the current tab"""
+        """close the current tab triggering the action and using keyboard"""
         self.assertEqual(self._get_tabs_count(), 0)
         self.tab = self._add_new_query_tab()
-        self.assertEqual(self._get_tabs_count(), 1)
+        self.tab = self._add_new_query_tab()
+        self.assertEqual(self._get_tabs_count(), 2)
         self.ui.tab_widget.removeTab(0)
+        self.assertEqual(self._get_tabs_count(), 1)
+
+        QTest.keyPress(self.ui, Qt.Key_W, Qt.ControlModifier)
         self.assertEqual(self._get_tabs_count(), 0)
+
         return
 
     #----------------------------------------------------------------------
@@ -276,22 +279,41 @@ class TestMainWindow(unittest.TestCase):
         return
 
     #----------------------------------------------------------------------
-    def test_copy_cell_value(self):
-        """test select and copy a cell value into a clipboard"""
+    def test_copy_result_table_row(self):
+        """test select and copy a row into a clipboard"""
         self.tab = self._add_new_query_tab()
-        sql_query_string = 'SELECT name FROM streets LIMIT 3'
+        sql_query_string = 'SELECT name, type FROM streets ORDER BY name desc, type desc LIMIT 1'
         self._prepare_query_text(sql_query_string)
         self._execute_sql(sql_query_string)
 
-        # TODO: send the copy to clipboard command
-        # QTest.keyPress(self.ui, QKeySequence.Copy)
+        self.tab.table.view.model().fetchMore() # need to load into `rows` from OGR layer
+        self.assertEqual(len(self.tab.table.view.model().rows), 1)
+        self.tab.table.view.selectRow(0)
+
+        QTest.keyPress(self.tab.table.view, Qt.Key_C, Qt.ControlModifier)
+        cp = self.app.clipboard().text()
+        parsed_cp = [i.split('\t') for i in cp.split('\n') if i]
+        self.assertEqual(parsed_cp[0], ['NAME', 'TYPE'])
+        self.assertEqual(parsed_cp[1], ['Zwicky Ave', 'residential'])
         return
 
     #----------------------------------------------------------------------
-    def test_copy_shape_value(self):
-        """test select and copy a WKT column cell value into a clipboard"""
-        # TODO: copied value should be a valid WKT; the cell value should
-        # be shortened with `...` in the end
+    def test_copy_result_table_cell(self):
+        """test select and copy a column cell value into a clipboard"""
+        self.tab = self._add_new_query_tab()
+        sql_query_string = 'SELECT name, type FROM streets ORDER BY name desc, type desc LIMIT 1'
+        self._prepare_query_text(sql_query_string)
+        self._execute_sql(sql_query_string)
+
+        self.tab.table.view.model().fetchMore() # need to load into `rows` from OGR layer
+        tm = self.tab.table.view.model()
+        sm = self.tab.table.view.selectionModel()
+        idx = tm.index(0,0, QModelIndex())
+        sm.select(idx,  QItemSelectionModel.Select)
+
+        QTest.keyPress(self.tab.table.view, Qt.Key_C, Qt.ControlModifier)
+        cp = self.app.clipboard().text()
+        self.assertEqual(cp, 'Zwicky Ave')
         return
 
     #----------------------------------------------------------------------
