@@ -1,12 +1,20 @@
 # -*- coding: UTF-8 -*-
 '''Unit tests for the application'''
 
+import os
+import sys
 import unittest
 
 from PyQt5.Qt import Qt
 from PyQt5.Qt import QTextCursor, QModelIndex, QItemSelectionModel
 from PyQt5.QtWidgets import QApplication
 from PyQt5.QtTest import QTest
+
+sys.path.insert(0,
+                os.path.join(
+                    os.path.abspath(os.path.join(os.path.dirname(__file__), '..')),
+                    'src'))
+os.chdir(sys.path[0])
 
 from window import Window
 from geodatabase import Geodatabase as GDB
