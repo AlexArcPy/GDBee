@@ -104,3 +104,4 @@ ENV/
 NYC.gdb/
 GDBeeProject.wpr
 coverage_html/
+trash/
