@@ -25,17 +25,24 @@ class Geodatabase(object):
 
     #----------------------------------------------------------------------
     def get_schemas(self):
-        """get dict { layer_name: [columns_names] }
+        """get dict { layer_name: [ {columns_name: column_type} ] }
         for all tables and feature classes inside a file gdb"""
         ds = ogr.Open(self.path, 0)
         schemas = {}
         for item in self.get_items():
             cols_names = []
             lyr = ds.GetLayerByName(item)
+            lyr_defn = lyr.GetLayerDefn()
             geom_col = lyr.GetGeometryColumn()
             cols_names.extend([col.GetName() for col in lyr.schema])
-            cols_names += [geom_col] if geom_col is not '' else []
-            schemas[item] = cols_names
+            field_types = {
+                col_name:
+                lyr_defn.GetFieldDefn(lyr_defn.GetFieldIndex(col_name)).GetTypeName()
+                for col_name in cols_names
+            }
+            if geom_col:
+                field_types[geom_col] = 'Geometry'
+            schemas[item] = field_types
         return schemas
 
     #----------------------------------------------------------------------

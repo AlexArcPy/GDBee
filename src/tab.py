@@ -272,7 +272,10 @@ class Tab(QWidget):
 
         self.gdb_schemas = self.gdb.get_schemas()
         self.gdb_columns_names = sorted(
-            list(set(itertools.chain.from_iterable(self.gdb_schemas.values()))),
+            list(
+                set(
+                    itertools.chain.from_iterable(
+                        [i.keys() for i in self.gdb_schemas.values()]))),
             key=lambda x: x.lower())
 
     #----------------------------------------------------------------------
@@ -290,15 +293,21 @@ class Tab(QWidget):
         if not self.gdb_items:
             return
 
-        for tbl in sorted(self.gdb_items, key=lambda i: i.lower()):
-            item = QTreeWidgetItem([tbl.title()])
+        for tbl_name in sorted(self.gdb_items, key=lambda i: i.lower()):
+            if tbl_name.islower() or tbl_name.isupper():
+                item = QTreeWidgetItem([tbl_name.title()])
+            else:
+                item = QTreeWidgetItem([tbl_name])
             font = QFont()
             font.setBold(True)
             item.setFont(0, font)
 
-            for col in sorted(self.gdb_schemas[tbl], key=lambda i: i.lower()):
+            for col_name, col_type in sorted(self.gdb_schemas[tbl_name].items()):
+                if col_name.islower() or col_name.isupper():
+                    col_name = col_name.title()
+
                 item_child = QTreeWidgetItem(
-                    [col.title() if col.islower() or col.isupper() else col])
+                    ['{0} ({1})'.format(col_name, col_type)])
                 item.addChild(item_child)
             self.toc.addTopLevelItem(item)
         return
