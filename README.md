@@ -215,7 +215,6 @@ LIMIT 10
 
 ### New functionality under consideration
 
-* Tree-view into all tables and columns in the database (SSMS like)
 * FileGDB API to add editing mode of geodatabase ([supported by ogr](http://www.gdal.org/ogr_sql_sqlite.html))
 
 ### Issues
