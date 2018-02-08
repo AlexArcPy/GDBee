@@ -204,6 +204,7 @@ class Tab(QWidget):
             else:
                 return
 
+            # TODO: add threading to allow user to cancel a long running query
             QApplication.setOverrideCursor(Qt.WaitCursor)
             start_time = time.time()
             self.gdb.open_connection()
@@ -254,6 +255,7 @@ class Tab(QWidget):
 
         self.table.draw_result(
             res, show_shapes=bool(self.result_should_include_geometry()))
+        self.table.view.resizeColumnsToContents()
         return
 
     #----------------------------------------------------------------------
