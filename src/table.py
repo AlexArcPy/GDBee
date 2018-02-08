@@ -175,7 +175,7 @@ class ResultTableModel(QAbstractTableModel):
                 if self.geom_column and self.show_shapes:
                     geom = feat.geometry()
                     if geom:
-                        attributes['Shape'] = geom.ExportToWkt()
+                        attributes[self.geom_column] = geom.ExportToWkt()
                 rows_fetched.append(Row(**attributes))
             else:
                 break
