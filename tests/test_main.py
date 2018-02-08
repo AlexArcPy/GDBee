@@ -370,9 +370,9 @@ class TestMainWindow(unittest.TestCase):
         self._execute_sql(sql_query_string)
         self.assertEqual(self.tab.table.table_data.number_layer_rows, 19091)
 
-        sql_query_string = 'SELECT name FROM streets limit 5'
+        sql_query_string = 'select st_x(shape) from homicides limit 5'
         self._execute_sql(sql_query_string)
-        self.assertIn('unexpected reserved keyword', self.tab.errors_panel.toPlainText())
+        self.assertIn('Undefined function', self.tab.errors_panel.toPlainText())
         self.tab.gdb_sql_dialect_combobox.setCurrentText('SQLite')
         self._execute_sql(sql_query_string)
         self.assertEqual(self.tab.table.table_data.number_layer_rows, 5)
