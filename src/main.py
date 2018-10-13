@@ -1,5 +1,5 @@
 # -*- coding: UTF-8 -*-
-'''The main application entry point'''
+"""The main application entry point."""
 
 import sys
 

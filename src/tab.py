@@ -1,5 +1,5 @@
 # -*- coding: UTF-8 -*-
-'''Tab in the tabbed window'''
+"""Tab in the tabbed window."""
 
 import re
 import time
@@ -10,27 +10,29 @@ from text_editor import TextEditor
 from completer import Completer
 from table import ResultTable
 from cfg import not_connected_to_gdb_message, sql_dialects_names
-from geodatabase import Geodatabase as GDB
+from geodatabase import Geodatabase
 
-from PyQt5.QtWidgets import (QWidget, QVBoxLayout, QAction, QPlainTextEdit, QSplitter,
-                             QApplication, QStyleFactory, QLabel, QPushButton, QToolBar,
-                             QFileDialog, QMessageBox, QTreeWidget, QTreeWidgetItem,
-                             QComboBox)
+from PyQt5.QtWidgets import (QWidget, QVBoxLayout, QAction, QPlainTextEdit,
+                             QSplitter, QApplication, QStyleFactory, QLabel,
+                             QPushButton, QToolBar, QFileDialog, QMessageBox,
+                             QTreeWidget, QTreeWidgetItem, QComboBox)
 from PyQt5.QtCore import Qt, QMargins
 from PyQt5.QtGui import QKeySequence, QFont
 
 
 ########################################################################
 class Tab(QWidget):
-    '''A tab in the QTableWidget where user executes query and sees the result'''
+    """Tab in the QTableWidget where user executes query and sees the result."""
 
-    #----------------------------------------------------------------------
+    # ----------------------------------------------------------------------
     def __init__(self):
+        """Initialize Tab with layout and behavior."""
         super(Tab, self).__init__()
 
         # regex pattern for SQL query block comments
         self.block_comment_re = re.compile(
-            r'(^)?[^\S\n]*/(?:\*(.*?)\*/[^\S\n]*|/[^\n]*)($)?', re.DOTALL | re.MULTILINE)
+            r'(^)?[^\S\n]*/(?:\*(.*?)\*/[^\S\n]*|/[^\n]*)($)?',
+            re.DOTALL | re.MULTILINE)
 
         main_layout = QVBoxLayout(self)
 
@@ -42,15 +44,17 @@ class Tab(QWidget):
 
         # connected geodatabase path toolbar
         self.connected_gdb_path_label = QLabel('')
-        self.connected_gdb_path_label.setTextInteractionFlags(Qt.TextSelectableByMouse)
-        self.connected_gdb_path_label.setToolTip("Connected geodatabase that queries "
-                                                 "will be run against")
+        self.connected_gdb_path_label.setTextInteractionFlags(
+            Qt.TextSelectableByMouse)
+        self.connected_gdb_path_label.setToolTip(
+            'Connected geodatabase that queries will be run against')
         self.connected_gdb_path_label.setText(not_connected_to_gdb_message)
 
         self.browse_to_gdb = QPushButton('Browse')
         self.browse_to_gdb.setShortcut(QKeySequence('Ctrl+B'))
-        self.browse_to_gdb.clicked.connect(lambda evt, arg=True: self.connect_to_geodatabase(
-            evt, triggered_with_browse=True))
+        self.browse_to_gdb.clicked.connect(
+            lambda evt, arg=True: self.connect_to_geodatabase(
+                evt, triggered_with_browse=True))
 
         self.gdb_sql_dialect_combobox = QComboBox()
         for dialect in sql_dialects_names:
@@ -68,7 +72,9 @@ class Tab(QWidget):
 
         # execute SQL query
         self.execute = QAction('Execute', self)
-        self.execute.setShortcuts([QKeySequence('F5'), QKeySequence('Ctrl+Return')])
+        self.execute.setShortcuts(
+            [QKeySequence('F5'),
+             QKeySequence('Ctrl+Return')])
         self.execute.triggered.connect(self.run_query)
         self.addAction(self.execute)
 
@@ -118,7 +124,8 @@ class Tab(QWidget):
         self.toc = QTreeWidget()
         self.toc.setHeaderHidden(True)
 
-        # second splitter between the TOC to the left and the query/table to the right
+        # second splitter between the TOC to the left and the query/table to the
+        # right
         toc_splitter = QSplitter(Qt.Horizontal)
         toc_splitter.addWidget(self.toc)
         toc_splitter.addWidget(splitter)
@@ -140,9 +147,9 @@ class Tab(QWidget):
 
         return
 
-    #----------------------------------------------------------------------
+    # ----------------------------------------------------------------------
     def connect_to_geodatabase(self, evt, triggered_with_browse=True):
-        """connect to geodatabase by letting user browse to a gdb folder"""
+        """Connect to geodatabase by letting user browse to a gdb folder."""
         if triggered_with_browse:
             gdb_connect_dialog = QFileDialog(self)
             gdb_connect_dialog.setFileMode(QFileDialog.Directory)
@@ -151,7 +158,7 @@ class Tab(QWidget):
             # TODO: add a filter to show only .gdb folders?
             # https://stackoverflow.com/questions/4893122/filtering-in-qfiledialog
             if gdb_path and gdb_path.endswith('.gdb'):
-                self.gdb = GDB(gdb_path)
+                self.gdb = Geodatabase(gdb_path)
                 if self.gdb.is_valid():
                     self.connected_gdb_path_label.setText(self.gdb.path)
                     self._set_gdb_items_highlight()
@@ -159,8 +166,8 @@ class Tab(QWidget):
                     self._fill_toc()
                 else:
                     msg = QMessageBox()
-                    msg.setText("This is not a valid file geodatabase")
-                    msg.setWindowTitle("Validation error")
+                    msg.setText('This is not a valid file geodatabase')
+                    msg.setWindowTitle('Validation error')
                     msg.setStandardButtons(QMessageBox.Ok)
                     msg.exec_()
         else:
@@ -170,10 +177,12 @@ class Tab(QWidget):
 
         return
 
-    #----------------------------------------------------------------------
-    def wheelEvent(self, event):
-        """overriding built-in method to handle mouse wheel scrolling when
-        the tab is focused"""
+    # ----------------------------------------------------------------------
+    def wheelEvent(self, event):  # noqa: N802
+        """Override built-in method to handle mouse wheel scrolling.
+
+        Necessary to do when the tab is focused.
+        """
         modifiers = QApplication.keyboardModifiers()
         if modifiers == Qt.ControlModifier:
             if event.angleDelta().y() > 0:  # scroll forward
@@ -182,9 +191,9 @@ class Tab(QWidget):
                 self.query.zoomOut(1)
         return
 
-    #----------------------------------------------------------------------
+    # ----------------------------------------------------------------------
     def run_query(self):
-        """run SQL query and draw the record set and call table drawing"""
+        """Run SQL query and draw the record set and call table drawing."""
         if not self.gdb:
             self.print_sql_execute_errors(not_connected_to_gdb_message)
             return
@@ -192,14 +201,19 @@ class Tab(QWidget):
             if not self.gdb.is_valid():
                 return
 
-            # use the text of what user selected, if none -> need to run the whole query
+            # use the text of what user selected, if none -> need to run the
+            # whole query
             part_sql_query = self.query.textCursor().selection().toPlainText()
 
-            sql_query = part_sql_query if part_sql_query else self.query.toPlainText()
+            if part_sql_query:
+                sql_query = part_sql_query
+            else:
+                sql_query = self.query.toPlainText()
+
             if sql_query:
                 # removing block comments and single line comments
-                sql_query = self.block_comment_re.sub(self._strip_block_comments,
-                                                      sql_query)
+                sql_query = self.block_comment_re.sub(
+                    self._strip_block_comments, sql_query)
                 sql_query = self._strip_single_comments(sql_query)
             else:
                 return
@@ -218,8 +232,9 @@ class Tab(QWidget):
                 self.table.show()
                 self.errors_panel.hide()
                 self.draw_result_table(res)
-                msg = "Executed in {:.1f} secs | {} rows".format(
-                    end_time - start_time, self.table.table_data.number_layer_rows)
+                msg = 'Executed in {exec_time:.1f} secs | {rows} rows'.format(
+                    exec_time=end_time - start_time,
+                    rows=self.table.table_data.number_layer_rows)
                 self.update_app_status_bar(msg)
 
         except Exception as err:
@@ -228,29 +243,30 @@ class Tab(QWidget):
             QApplication.restoreOverrideCursor()
         return
 
-    #----------------------------------------------------------------------
+    # ----------------------------------------------------------------------
     def result_should_include_geometry(self):
-        """get whether the setting to include the geometry column was checked"""
+        """Get the setting defining whether to include the geometry column."""
         try:
             return self.parentWidget().parentWidget().parentWidget(
             ).do_include_geometry.isChecked()
-        except:
+        except BaseException:
             return True
 
-    #----------------------------------------------------------------------
+    # ----------------------------------------------------------------------
     def update_app_status_bar(self, message):
-        """updating app status bar with the execution result details"""
+        """Update app status bar with the execution result details."""
         try:
-            self.parentWidget().parentWidget().parentWidget().statusBar().showMessage(
-                message)
-        except:
+            self.parentWidget().parentWidget().parentWidget().statusBar(
+            ).showMessage(message)
+        except BaseException:
             pass
         return
 
-    #----------------------------------------------------------------------
+    # ----------------------------------------------------------------------
     def draw_result_table(self, res):
-        """draw table with the record set received from the database"""
-        geom_col_name = res.GetGeometryColumn()  # shape col was in the sql query
+        """Draw table with the record set received from the geodatabase."""
+        geom_col_name = res.GetGeometryColumn(
+        )  # shape col was in the sql query
         self.geometry_isin_query = bool(geom_col_name)
 
         self.table.draw_result(
@@ -258,17 +274,17 @@ class Tab(QWidget):
         self.table.view.resizeColumnsToContents()
         return
 
-    #----------------------------------------------------------------------
+    # ----------------------------------------------------------------------
     def print_sql_execute_errors(self, err):
-        """print the errors that occurred in a special panel"""
+        """Print to a special panel errors that occurred during execution."""
         self.table.hide()
         self.errors_panel.show()
         self.errors_panel.setPlainText(err)
         return
 
-    #----------------------------------------------------------------------
+    # ----------------------------------------------------------------------
     def _set_gdb_items_highlight(self):
-        """set completer and highlight properties for gdb items"""
+        """Set completer and highlight properties for geodatabase items."""
         self.gdb_items = self.gdb.get_items()
         self.highlighter.set_highlight_rules_gdb_items(self.gdb_items, 'Table')
 
@@ -280,17 +296,18 @@ class Tab(QWidget):
                         [i.keys() for i in self.gdb_schemas.values()]))),
             key=lambda x: x.lower())
 
-    #----------------------------------------------------------------------
+    # ----------------------------------------------------------------------
     def _set_gdb_items_complete(self):
-        """update completer rules to include gdb items"""
+        """Update completer rules to include geodatabase items."""
         self.completer.update_completer_string_list(self.gdb_items +
                                                     self.gdb_columns_names)
-        self.highlighter.set_highlight_rules_gdb_items(self.gdb_columns_names, 'Column')
+        self.highlighter.set_highlight_rules_gdb_items(self.gdb_columns_names,
+                                                       'Column')
         return
 
-    #----------------------------------------------------------------------
+    # ----------------------------------------------------------------------
     def _fill_toc(self):
-        """fill TOC with geodatabase datasets and columns"""
+        """Fill TOC with geodatabase datasets and columns."""
         self.toc.clear()
         if not self.gdb_items:
             return
@@ -304,7 +321,8 @@ class Tab(QWidget):
             font.setBold(True)
             item.setFont(0, font)
 
-            for col_name, col_type in sorted(self.gdb_schemas[tbl_name].items()):
+            for col_name, col_type in sorted(
+                    self.gdb_schemas[tbl_name].items()):
                 if col_name.islower() or col_name.isupper():
                     col_name = col_name.title()
 
@@ -314,18 +332,18 @@ class Tab(QWidget):
             self.toc.addTopLevelItem(item)
         return
 
-    #----------------------------------------------------------------------
+    # ----------------------------------------------------------------------
     def _do_toc_hide_show(self):
-        """hide TOC with tables and columns"""
+        """Hide TOC with tables and columns."""
         if self.toc.isVisible():
             self.toc.setVisible(False)
         else:
             self.toc.setVisible(True)
         return
 
-    #----------------------------------------------------------------------
+    # ----------------------------------------------------------------------
     def _strip_block_comments(self, sql_query):
-        """strip the block comments in SQL query"""
+        """Strip the block comments in SQL query."""
         start, mid, end = sql_query.group(1, 2, 3)
         if mid is None:
             # this is a single-line comment
@@ -340,9 +358,9 @@ class Tab(QWidget):
             # this is a multi-line comment without line break
             return ' '
 
-    #----------------------------------------------------------------------
+    # ----------------------------------------------------------------------
     def _strip_single_comments(self, sql_query):
-        """strip the single line comments in SQL query"""
+        """Strip the single line comments in SQL query."""
         clean_query = []
         for line in sql_query.rstrip().split('\n'):
             clean_line = line.split('--')[0]

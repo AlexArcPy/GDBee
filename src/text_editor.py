@@ -1,8 +1,9 @@
 # -*- coding: UTF-8 -*-
-'''Query text editor widget
+"""Query text editor widget.
 
 Adapted from
-https://github.com/baoboa/pyqt5/blob/master/examples/tools/customcompleter/customcompleter.py
+https://github.com/baoboa/pyqt5/blob/master/examples/tools/customcompleter/
+customcompleter.py
 
 #############################################################################
 ##
@@ -43,40 +44,46 @@ https://github.com/baoboa/pyqt5/blob/master/examples/tools/customcompleter/custo
 ## $QT_END_LICENSE$
 ##
 #############################################################################
-'''
+"""
 
 from PyQt5.QtCore import Qt
-from PyQt5.QtGui import (QTextCursor, QTextFormat, QColor, QKeySequence)
+from PyQt5.QtGui import (QTextCursor, QTextFormat, QColor)
 from PyQt5.QtWidgets import (QApplication, QCompleter, QTextEdit)
 
 
 ########################################################################
 class TextEditor(QTextEdit):
-    """Text editor with text completion for writing queries"""
+    """Text editor with text completion for writing queries."""
 
-    #----------------------------------------------------------------------
+    # ----------------------------------------------------------------------
     def __init__(self, parent=None):
-        """Constructor"""
+        """Initialize TextEditor with basic properties."""
         super(TextEditor, self).__init__(parent)
         self._completer = None
         self.keys_to_ignore = [
-            Qt.Key_Enter, Qt.Key_Return, Qt.Key_Escape, Qt.Key_Tab, Qt.Key_Backtab
+            Qt.Key_Enter,
+            Qt.Key_Return,
+            Qt.Key_Escape,
+            Qt.Key_Tab,
+            Qt.Key_Backtab,
         ]
         # excluding `_` as this is often in SQL spatial functions
         self.special_chars = "~!@#$%^&*()+{}|:\"<>?,./;'[]\\-="
         self.completion_after_chars = 3
         return
 
-    #----------------------------------------------------------------------
-    def insertFromMimeData(self, source):
-        """overriding built-in method to convert rich text to plain text"""
+    # ----------------------------------------------------------------------
+    def insertFromMimeData(self, source):  # noqa: N802
+        """Override built-in method to convert rich text to plain text."""
         self.insertPlainText(source.text())
         return
 
-    #----------------------------------------------------------------------
-    def wheelEvent(self, event):
-        """overriding  built-in method to handle mouse wheel scrolling with
-        the query panel focused"""
+    # ----------------------------------------------------------------------
+    def wheelEvent(self, event):  # noqa: N802
+        """Override built-in method to handle mouse wheel scrolling.
+
+        Required when doing mouse scrolling with the query panel focused.
+        """
         modifiers = QApplication.keyboardModifiers()
         if modifiers == Qt.ControlModifier:
             if event.angleDelta().y() > 0:  # scroll forward
@@ -92,14 +99,14 @@ class TextEditor(QTextEdit):
                 self.verticalScrollBar().setValue(cur_val + step_size)
         return
 
-    #----------------------------------------------------------------------
+    # ----------------------------------------------------------------------
     def completer(self):
-        """get internal completer"""
+        """Get internal completer."""
         return self._completer
 
-    #----------------------------------------------------------------------
+    # ----------------------------------------------------------------------
     def set_completer(self, completer):
-        """setting completer object and its properties"""
+        """Set completer object and its properties."""
         if self._completer is not None:
             self._completer.activated.disconnect()
         else:
@@ -113,9 +120,9 @@ class TextEditor(QTextEdit):
             completer.activated.connect(self.insert_completion)
         return
 
-    #----------------------------------------------------------------------
+    # ----------------------------------------------------------------------
     def insert_completion(self, completion):
-        """insert complete word after user accepted a suggestion"""
+        """Insert complete word after user accepted a suggestion."""
         if self._completer.widget() is not self:
             return
 
@@ -126,16 +133,16 @@ class TextEditor(QTextEdit):
         cur.insertText(completion[-extra_length:])
         self.setTextCursor(cur)
 
-    #----------------------------------------------------------------------
+    # ----------------------------------------------------------------------
     def get_text_under_cursor(self):
-        """get the text currently under cursor"""
+        """Get the text currently under cursor."""
         cur = self.textCursor()
         cur.select(QTextCursor.WordUnderCursor)
         return cur.selectedText()
 
-    #----------------------------------------------------------------------
+    # ----------------------------------------------------------------------
     def is_parens_char_near(self):
-        """searching for the parens chars around the text cursor"""
+        """Search for the parens chars around the text cursor."""
         cur = self.textCursor()
         try:
             cur.select(QTextCursor.WordUnderCursor)
@@ -144,57 +151,37 @@ class TextEditor(QTextEdit):
                 return ')'
             if cur.selectedText() == '(':
                 return '('
-        except:
+        except BaseException:
             pass
 
-    #----------------------------------------------------------------------
-    def focusInEvent(self, evt):
-        """built-in method to handle focusing event"""
+    # ----------------------------------------------------------------------
+    def focusInEvent(self, evt):  # noqa: N802
+        """Built-in method to handle focusing event."""
         if self._completer is not None:
             self._completer.setWidget(self)
         super(TextEditor, self).focusInEvent(evt)
         return
 
-    #----------------------------------------------------------------------
+    # ----------------------------------------------------------------------
     def highlight_line(self):
-        """highlight the whole line the cursor is on"""
+        """Highlight the whole line the cursor is on."""
         line_highlight = self.ExtraSelection()
         line_highlight.cursor = self.textCursor()
         line_highlight.format.setProperty(QTextFormat.FullWidthSelection, True)
         line_highlight.format.setBackground(QColor('#f3f0f0'))
         self.setExtraSelections([line_highlight])
-
-        # TODO: does not respect going up between rows with the arrow keys
-        # highlighting the matching parens
-        #parens_format = QTextCharFormat()
-        #parens_format.setForeground(Qt.darkRed)
-
-        #if self.is_parens_char_near():
-        #found = False
-        #cur = self.textCursor()
-        #while not found:
-        #i = 1
-        #cur.movePosition(QTextCursor.Right, QTextCursor.MoveAnchor)
-        ##cur.movePosition()
-        #print(cur.position())
-        #cur.select(QTextCursor.BlockUnderCursor)
-        #print(cur.selectedText())
-        #if cur.selectedText() == ')':
-        #found = True
-        #print('found')
-        #i += 1
         return
 
-    #----------------------------------------------------------------------
-    def keyPressEvent(self, evt):
-        """overriding built-in method to handle user pressing keys"""
+    # ----------------------------------------------------------------------
+    def keyPressEvent(self, evt):  # noqa: N802
+        """Override built-in method to handle user pressing keys."""
         if self._completer is not None and self._completer.popup().isVisible():
             if evt.key() in self.keys_to_ignore:
                 evt.ignore()
                 return
 
-        is_shortcut = ((evt.modifiers() & Qt.ControlModifier) != 0 and
-                       evt.key() == Qt.Key_F1)
+        is_shortcut = ((evt.modifiers() & Qt.ControlModifier) != 0
+                       and evt.key() == Qt.Key_F1)
         if self._completer is None or not is_shortcut:
             super(TextEditor, self).keyPressEvent(evt)
 
@@ -207,8 +194,8 @@ class TextEditor(QTextEdit):
 
         # if no text entered or text is yet too short -> no completion
         if not is_shortcut and (has_modifier or len(evt.text()) == 0 or
-                                len(cmpl_prefix) < self.completion_after_chars or
-                                evt.text()[-1] in self.special_chars):
+                                len(cmpl_prefix) < self.completion_after_chars
+                                or evt.text()[-1] in self.special_chars):
             self._completer.popup().hide()
             return
 
@@ -220,7 +207,7 @@ class TextEditor(QTextEdit):
 
         # draw the rectangle with suggestions
         rect = self.cursorRect()
-        rect.setWidth(self._completer.popup().sizeHintForColumn(0) +
-                      self._completer.popup().verticalScrollBar().sizeHint().width())
+        rect.setWidth(self._completer.popup().sizeHintForColumn(0) + self.
+                      _completer.popup().verticalScrollBar().sizeHint().width())
         self._completer.complete(rect)
         return

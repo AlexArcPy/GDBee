@@ -1,8 +1,9 @@
 # -*- coding: UTF-8 -*-
-'''Rules for highlighting SQL queries against Esri file geodatabase.
+"""Rules for highlighting SQL queries against Esri file geodatabase.
 
 Adapted from
-https://github.com/baoboa/pyqt5/blob/master/examples/richtext/syntaxhighlighter.py
+https://github.com/baoboa/pyqt5/blob/master/examples/richtext/
+syntaxhighlighter.py
 
 #############################################################################
 ##
@@ -43,7 +44,7 @@ https://github.com/baoboa/pyqt5/blob/master/examples/richtext/syntaxhighlighter.
 ## $QT_END_LICENSE$
 ##
 #############################################################################
-'''
+"""
 
 import io
 from PyQt5.QtCore import Qt, QRegExp
@@ -52,21 +53,21 @@ from PyQt5.QtGui import (QTextCharFormat, QColor, QFont, QSyntaxHighlighter)
 
 ########################################################################
 class Highlighter(QSyntaxHighlighter):
-    '''Highlighter class to provide text coloring in the query panel'''
+    """Highlighter class to provide text coloring in the query panel."""
 
-    #----------------------------------------------------------------------
+    # ----------------------------------------------------------------------
     def __init__(self, parent=None):
-        """Constructor"""
+        """Initialize Highlighter with basic highlight options."""
         super(Highlighter, self).__init__(parent)
 
         self.gdb_highlight_settings = {
             'Table': {
                 'Foreground': Qt.black,
-                'FontWeight': QFont.Bold
+                'FontWeight': QFont.Bold,
             },
             'Column': {
                 'Foreground': Qt.darkGray,
-                'FontWeight': QFont.Normal
+                'FontWeight': QFont.Normal,
             },
         }
 
@@ -75,11 +76,13 @@ class Highlighter(QSyntaxHighlighter):
         keyword_format.setForeground(Qt.darkBlue)
         keyword_format.setFontWeight(QFont.Bold)
 
-        with io.open(r'completer_data\keywords.txt', 'r', encoding='utf-8') as f:
+        with io.open(
+                r'completer_data\keywords.txt', 'r', encoding='utf-8') as f:
             self.plain_keywords = [k.rstrip() for k in f.readlines()]
 
         keyword_patterns = [
-            '\\b{}\\b'.format(plain_keyword) for plain_keyword in self.plain_keywords
+            '\\b{0}\\b'.format(plain_keyword)
+            for plain_keyword in self.plain_keywords
         ]
 
         self.highlight_rules = []
@@ -88,22 +91,12 @@ class Highlighter(QSyntaxHighlighter):
             regexp.setCaseSensitivity(Qt.CaseInsensitive)
             self.highlight_rules.append((regexp, keyword_format))
 
-        # numeric values to show as blue
-        # TODO make sure that (1000, 1500) and 1000,1500;
-        # will be highlighted properly
-        #attempts
-        # [\W][-+]?[0-9]*\.?[0-9]+([eE][-+]?[0-9]+)?
-        # simple working "(?<=[^\w])[\d\.]+"
-        #"(?i)(?<=[^\w])[-+]?[\d\.]+e?[+-]?\d*"
-        #old "\s[-+]?[0-9]*\.?[0-9]+([eE][-+]?[0-9]+)?"
-
         numeric_format = QTextCharFormat()
-
         numeric_format.setForeground(Qt.blue)
-        regex = QRegExp("\s[-+]?[0-9]*\.?[0-9]+([eE][-+]?[0-9]+)?")
+        regex = QRegExp(r'\s[-+]?[0-9]*\.?[0-9]+([eE][-+]?[0-9]+)?')
         self.highlight_rules.append((regex, numeric_format))
 
-        #TODO: highlight parens around such as st_x(shape)
+        # TODO: highlight parens around such as st_x(shape)
         self.set_highlight_rules_comments()
         self.multi_line_comment_format = QTextCharFormat()
         self.multi_line_comment_format.setForeground(Qt.darkGreen)
@@ -114,49 +107,53 @@ class Highlighter(QSyntaxHighlighter):
         function_format = QTextCharFormat()
         function_format.setFontItalic(True)
         function_format.setForeground(QColor(255, 105, 255))
-        self.highlight_rules.append((QRegExp("\\b[A-Za-z0-9_]+(?=\\()"), function_format))
+        self.highlight_rules.append((QRegExp('\\b[A-Za-z0-9_]+(?=\\()'),
+                                     function_format))
 
-        self.comment_start_expression = QRegExp("/\\*")
-        self.comment_end_expression = QRegExp("\\*/")
+        self.comment_start_expression = QRegExp('/\\*')
+        self.comment_end_expression = QRegExp('\\*/')
         return
 
-    #----------------------------------------------------------------------
+    # ----------------------------------------------------------------------
     def set_highlight_rules_quotes(self):
-        """strings in quotes (both single and double) to show as red"""
+        """Strings in quotes (both single and double) to show as red."""
         quote_format = QTextCharFormat()
         quote_format.setForeground(Qt.red)
-        self.highlight_rules.append((QRegExp("\".*\""), quote_format))
+        self.highlight_rules.append((QRegExp('\".*\"'), quote_format))
         self.highlight_rules.append((QRegExp("'.*\'"), quote_format))
         return
 
-    #----------------------------------------------------------------------
+    # ----------------------------------------------------------------------
     def set_highlight_rules_comments(self):
-        """single- and multi-line comments to show as green"""
+        """Single- and multi-line comments to show as green."""
         single_line_comment_format = QTextCharFormat()
         single_line_comment_format.setForeground(Qt.darkGreen)
-        self.highlight_rules.append((QRegExp("--[^\n]*"), single_line_comment_format))
+        self.highlight_rules.append((QRegExp('--[^\n]*'),
+                                     single_line_comment_format))
         return
 
-    #----------------------------------------------------------------------
+    # ----------------------------------------------------------------------
     def set_highlight_rules_gdb_items(self, items, item_type):
-        """update highlight rules to include gdb datasets"""
+        """Update highlight rules to include geodatabase datasets."""
         for item in items:
             fmt = QTextCharFormat()
-            fmt.setForeground(self.gdb_highlight_settings[item_type]['Foreground'])
-            fmt.setFontWeight(self.gdb_highlight_settings[item_type]['FontWeight'])
-            regexp = QRegExp('\\b{}\\b'.format(item))
+            fmt.setForeground(
+                self.gdb_highlight_settings[item_type]['Foreground'])
+            fmt.setFontWeight(
+                self.gdb_highlight_settings[item_type]['FontWeight'])
+            regexp = QRegExp('\\b{0}\\b'.format(item))
             regexp.setCaseSensitivity(Qt.CaseInsensitive)
             self.highlight_rules.append((regexp, fmt))
 
-        # need to put the single line comment rules afterwards; otherwise table names
-        # are highlighted even when are part of a comment
+        # need to put the single line comment rules afterwards;
+        # otherwise table names are highlighted even when are part of comment
         self.set_highlight_rules_comments()
         self.set_highlight_rules_quotes()
         return
 
-    #----------------------------------------------------------------------
-    def highlightBlock(self, text):
-        """reimplementation of the built-in method"""
+    # ----------------------------------------------------------------------
+    def highlightBlock(self, text):  # noqa: N802
+        """Reimplementation of the built-in method."""
         for pattern, format_ in self.highlight_rules:
             expression = QRegExp(pattern)
             idx = expression.indexIn(text)
@@ -178,10 +175,11 @@ class Highlighter(QSyntaxHighlighter):
                 self.setCurrentBlockState(1)
                 comment_length = len(text) - start_idx
             else:
-                comment_length = end_index - start_idx + self.comment_end_expression.matchedLength(
-                )
+                matched_length = self.comment_end_expression.matchedLength()
+                comment_length = end_index - start_idx + matched_length
 
-            self.setFormat(start_idx, comment_length, self.multi_line_comment_format)
-            start_idx = self.comment_start_expression.indexIn(text,
-                                                              start_idx + comment_length)
+            self.setFormat(start_idx, comment_length,
+                           self.multi_line_comment_format)
+            start_idx = self.comment_start_expression.indexIn(
+                text, start_idx + comment_length)
         return
