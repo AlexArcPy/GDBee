@@ -249,7 +249,7 @@ class Tab(QWidget):
         try:
             return self.parentWidget().parentWidget().parentWidget(
             ).do_include_geometry.isChecked()
-        except BaseException:
+        except Exception:
             return True
 
     # ----------------------------------------------------------------------
@@ -258,7 +258,7 @@ class Tab(QWidget):
         try:
             self.parentWidget().parentWidget().parentWidget().statusBar(
             ).showMessage(message)
-        except BaseException:
+        except Exception:
             pass
         return
 

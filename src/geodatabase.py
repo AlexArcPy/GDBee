@@ -54,7 +54,7 @@ class Geodatabase(object):
         """Check if .gdb folder provided by user is a valid file gdb."""
         try:
             ds = ogr.Open(self.path, 0)
-        except BaseException:
+        except Exception:
             return False
 
         if ds:

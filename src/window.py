@@ -9,7 +9,7 @@ import pkg_resources
 try:
     pkg_resources.get_distribution('tabulate')
     from tabulate import tabulate
-except BaseException:
+except Exception:
     pkg_resources.DistributionNotFound
     tabulate_found = False
 else:
@@ -150,7 +150,7 @@ class Window(QMainWindow):
             else:
                 if not current_tab.table.table_data.number_layer_rows:
                     raise
-        except BaseException:
+        except Exception:
             return
 
         QApplication.setOverrideCursor(Qt.WaitCursor)
@@ -250,7 +250,7 @@ class Window(QMainWindow):
         """Expand all items in the schemas panel."""
         try:
             self.tab_widget.currentWidget().toc.expandAll()
-        except BaseException:
+        except Exception:
             return
 
     # ----------------------------------------------------------------------
@@ -258,7 +258,7 @@ class Window(QMainWindow):
         """Collapse all items in the schemas panel."""
         try:
             self.tab_widget.currentWidget().toc.collapseAll()
-        except BaseException:
+        except Exception:
             return
 
     # ----------------------------------------------------------------------
@@ -266,7 +266,7 @@ class Window(QMainWindow):
         """Hide or show toc panel."""
         try:
             self.tab_widget.currentWidget()._do_toc_hide_show()
-        except BaseException:
+        except Exception:
             pass
 
     # ----------------------------------------------------------------------

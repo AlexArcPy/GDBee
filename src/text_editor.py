@@ -151,7 +151,7 @@ class TextEditor(QTextEdit):
                 return ')'
             if cur.selectedText() == '(':
                 return '('
-        except BaseException:
+        except Exception:
             pass
 
     # ----------------------------------------------------------------------
