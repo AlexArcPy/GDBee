@@ -1,3 +1,6 @@
+[![Total alerts](https://img.shields.io/lgtm/alerts/g/AlexArcPy/GDBee.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/AlexArcPy/GDBee/alerts/)
+[![Language grade: Python](https://img.shields.io/lgtm/grade/python/g/AlexArcPy/GDBee.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/AlexArcPy/GDBee/context:python)
+
 # Overview
 
 `GDBee` is a PyQt5 desktop application which you can use to write and execute SQL queries against tables and feature classes stored inside an Esri file geodatabase. It provides a tabbed interface which lets you connect to multiple geodatabases within a single session. It has a rich code editor featuring auto-completion (with suggestions), syntax highlight, and result set export.
